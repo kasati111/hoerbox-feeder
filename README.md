@@ -13,7 +13,7 @@ Damit lässt sich eine Hörbox automatisch verwalten – **kein Kabel, kein
 SD-Karten-Gefummel, kein Dateiname-Sortieren**, nur ein Browser und ein Link.
 
 <p>
-  <img src="docs/screenshots/start.png" alt="Startseite: Link einfügen und Kanal wählen" width="46%">
+  <img src="docs/screenshots/start.png" alt="Startseite: Link einfügen und Kanal wählen" width="46%" style="margin-right: 4%;">
   <img src="docs/screenshots/kanal.png" alt="Kanal-Ansicht mit einem geladenen Titel" width="46%">
 </p>
 
