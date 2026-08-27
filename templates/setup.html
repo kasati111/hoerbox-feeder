@@ -103,9 +103,10 @@
         <span id="skin-msg"></span>
     </div>
 
+    <h2>{{ t('setup.addresses_h2') }}</h2>
     <p class="hint">{{ t('setup.addresses_hint') }}</p>
     <div class="setup-callout">
-        {{ t('setup.deactivate_callout') }}
+        {{ t('setup.deactivate_callout') | safe }}
     </div>
     <div class="setup-grid">
         {% for entry in addresses %}

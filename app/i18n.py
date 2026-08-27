@@ -277,6 +277,7 @@ STRINGS = {
         "de": "Kanaltasten (nummeriert)",
         "en": "Numbered buttons",
     },
+    "setup.addresses_h2": {"de": "Podcast-URLs", "en": "Podcast URLs"},
     "setup.addresses_hint": {
         "de": "Diese Adressen einmalig im Hörspieler als Podcast hinzufügen – "
               "für jeden Knopf eine.",
@@ -285,12 +286,13 @@ STRINGS = {
     },
     "setup.deactivate_callout": {
         "de": "💡 Läuft auf einem Knopf externer Content (z. B. von einer "
-              "SD-Karte)? Dann kannst Du ihn hier deaktivieren, indem Du auf "
-              "den jeweiligen QR-Code klickst. Der Feeder lässt ihn dann in "
-              "Ruhe, damit nichts durcheinanderkommt.",
+              "SD-Karte)? Dann kannst Du ihn hier <strong>deaktivieren</strong>, "
+              "indem Du auf den jeweiligen QR-Code klickst. Der Feeder lässt "
+              "ihn dann in Ruhe, damit nichts durcheinanderkommt.",
         "en": "Is a button already playing external content (e.g. from an "
-              "SD card)? You can deactivate it here by clicking its QR "
-              "code. The feeder then leaves it alone so nothing gets mixed up.",
+              "SD card)? You can <strong>deactivate</strong> it here by "
+              "clicking its QR code. The feeder then leaves it alone so "
+              "nothing gets mixed up.",
     },
     "setup.qr_alt": {"de": "QR-Code {name}", "en": "QR code {name}"},
     "setup.inactive_hint": {"de": "deaktiviert", "en": "deactivated"},
