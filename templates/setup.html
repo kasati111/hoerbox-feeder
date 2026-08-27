@@ -78,14 +78,10 @@
     </div>
 
     <div class="setup-card settings-card">
-        <h2>Tonspur</h2>
-        <p class="hint">Betrifft nur neue Downloads – bereits geladene Titel behalten ihre
-           bisherige Tonspur.</p>
+        <h2>Audioausgabe</h2>
         <div class="settings-row">
-            <select id="audio-channels-input">
-                <option value="1" {% if audio_channels == 1 %}selected{% endif %}>Mono</option>
-                <option value="2" {% if audio_channels == 2 %}selected{% endif %}>Stereo</option>
-            </select>
+            <label><input type="radio" name="audio-channels" value="1" {% if audio_channels == 1 %}checked{% endif %}> Mono</label>
+            <label><input type="radio" name="audio-channels" value="2" {% if audio_channels == 2 %}checked{% endif %}> Stereo</label>
             <button type="button" id="audio-channels-save" class="cookie-upload-btn">Speichern</button>
         </div>
         <span id="audio-channels-msg"></span>
@@ -221,13 +217,13 @@
 })();
 
 (function() {
-    const input = document.getElementById('audio-channels-input');
     const saveBtn = document.getElementById('audio-channels-save');
     const msg = document.getElementById('audio-channels-msg');
     if (!saveBtn) return;
 
     saveBtn.addEventListener('click', async () => {
-        const value = parseInt(input.value, 10);
+        const checked = document.querySelector('input[name="audio-channels"]:checked');
+        const value = parseInt(checked.value, 10);
         saveBtn.disabled = true;
         msg.textContent = '';
         try {
