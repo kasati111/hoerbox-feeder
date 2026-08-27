@@ -3,7 +3,7 @@
 [![CI](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-Selbst-gehostete Web-App: per Browser (am Handy, Tablet, PC) einen Link einfügen (YouTube,
+Selbst-gehostete Web-App: per Browser einen Link einfügen (YouTube,
 Spotify, Podcast, ...), der Server lädt den Inhalt herunter, wandelt ihn in
 ein einheitliches, normalisiertes MP3-Format um und stellt ihn als
 Podcast-RSS-Feed bereit – einmal die Feed-Adresse im Zielgerät eintragen,
