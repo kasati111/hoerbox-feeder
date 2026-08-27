@@ -12,6 +12,14 @@ danach kommen neue Folgen bei Playlists/Abos automatisch nach.
 Damit lässt sich eine Hörbox automatisch verwalten – **kein Kabel, kein
 SD-Karten-Gefummel, kein Dateiname-Sortieren**, nur ein Browser und ein Link.
 
+<p>
+  <img src="docs/screenshots/start.png" alt="Startseite: Link einfügen und Kanal wählen" width="46%">
+  <img src="docs/screenshots/kanal.png" alt="Kanal-Ansicht mit einem geladenen Titel" width="46%">
+</p>
+
+*(Beispielinhalt im Screenshot: „Die Sterntaler“ von den Brüdern Grimm,
+gemeinfrei, via [vorleser.net](https://vorleser.net).)*
+
 ## Wie es funktioniert
 
 1. Link einfügen, einem von neun Kanälen zuordnen.
