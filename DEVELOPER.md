@@ -41,7 +41,7 @@ hoerbox-feeder/
 │   ├── models.py        – ORM-Modelle (Channel, Item, Subscription)
 │   ├── crud.py          – Datenbankoperationen
 │   ├── downloader.py    – yt-dlp + Spotify-Integration
-│   ├── audio.py         – ffmpeg-Pipeline (loudnorm, mono, MP3)
+│   ├── audio.py         – ffmpeg-Pipeline (loudnorm, mono/stereo, MP3)
 │   ├── worker.py        – Download-Worker-Thread
 │   ├── scheduler.py     – APScheduler (Abo-Sync, yt-dlp-Update)
 │   ├── feed.py          – Podcast-Feed-Generator (feedgen)
@@ -72,7 +72,7 @@ POST /api/channels/{n}/items   (URL vom Nutzer)
   → worker.py holt Job aus Warteschlange
   → downloader.analyze(url) – Typ erkennen, Playlist aufklappen
   → downloader.download_audio(url, dest_dir) – yt-dlp
-  → audio.py – ffmpeg loudnorm + mono + 128k MP3
+  → audio.py – ffmpeg loudnorm + mono/stereo + 128k MP3
   → CRUD: Status 'done', Dateipfad speichern
 ```
 
@@ -104,7 +104,7 @@ APScheduler → scheduler.py → crud.list_due_subscriptions()
 
 | Tool | Version | Zweck |
 |---|---|---|
-| `ffmpeg` | beliebig | Audio-Konvertierung (loudnorm, mono, MP3) |
+| `ffmpeg` | beliebig | Audio-Konvertierung (loudnorm, mono/stereo, MP3) |
 | `node` | **≥ 22** | yt-dlp EJS-Solver für YouTube n-challenge |
 | `spotdl` | ≥ 4.5 | Spotify-Metadaten (nur Metadaten, kein Download!) |
 

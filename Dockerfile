@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# ffmpeg         – audio pipeline (loudnorm, mono, MP3)
+# ffmpeg         – audio pipeline (loudnorm, mono/stereo, MP3)
 # Node.js 22     – JavaScript runtime required by yt-dlp >= 2026 to solve
 #                  YouTube's n-challenge (EJS). Debian's built-in nodejs is
 #                  only v18 which yt-dlp rejects (minimum: v22).

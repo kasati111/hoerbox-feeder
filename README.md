@@ -23,7 +23,7 @@ gemeinfrei, via [vorleser.net](https://vorleser.net).)*
 ## Wie es funktioniert
 
 1. Link einfügen, einem von neun Kanälen zuordnen.
-2. hoerbox-feeder lädt den Inhalt, konvertiert ihn zu MP3 (Mono, normalisierte
+2. hoerbox-feeder lädt den Inhalt, konvertiert ihn zu MP3 (normalisierte
    Lautstärke, eingebettetes Cover).
 3. Jeder Kanal ist als eigener Podcast-RSS-Feed abrufbar
    (`http://<server>:8080/feed/<kanal>.xml`).
@@ -54,7 +54,8 @@ Projekt übernimmt keine Haftung für die Art, wie es genutzt wird.
 
 - Link einfügen → Kanal wählen → Fertig. Playlists/Podcasts werden erkannt
   und automatisch als Abo eingerichtet (neue Folgen kommen von selbst).
-- Automatische Lautstärke-Normalisierung, Mono-Umwandlung, Cover-Einbettung.
+- Automatische Lautstärke-Normalisierung, Cover-Einbettung, Tonspur
+  (Mono/Stereo) global einstellbar (Setup-Seite).
 - Übersicht über Speicherbelegung pro Kanal, SD-Karten-Export als ZIP.
 - Bibliothek zum Parken von Inhalten außerhalb der aktiven Kanäle.
 - Läuft komplett lokal im eigenen Netzwerk, keine Cloud-Abhängigkeit.

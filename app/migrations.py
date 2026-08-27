@@ -20,6 +20,7 @@ _NEW_COLUMNS = [
     ("item", "alt_source_url", "TEXT"),
     ("item", "alt_source_reviewed", "INTEGER NOT NULL DEFAULT 0"),
     ("channel", "active", "INTEGER NOT NULL DEFAULT 1"),
+    ("settings", "audio_channels", "INTEGER NOT NULL DEFAULT 1"),
 ]
 
 

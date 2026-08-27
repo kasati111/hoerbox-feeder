@@ -52,7 +52,10 @@ MAX_INITIAL_PLAYLIST_ITEMS = int(os.getenv("MAX_INITIAL_PLAYLIST_ITEMS", "60"))
 # --- Audio settings ---------------------------------------------------------
 AUDIO_BITRATE = os.getenv("AUDIO_BITRATE", "128k")   # CBR
 AUDIO_SAMPLE_RATE = int(os.getenv("AUDIO_SAMPLE_RATE", "44100"))
-AUDIO_CHANNELS = 1  # mono (the target playback device has a single speaker)
+# Seed default only (1=mono, 2=stereo) -- once the app has started, the live
+# value lives in Settings.audio_channels and is editable on the Setup page,
+# not here.
+AUDIO_CHANNELS = 1
 LOUDNORM_I = -16.0
 LOUDNORM_TP = -1.5
 LOUDNORM_LRA = 11.0

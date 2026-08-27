@@ -1,6 +1,7 @@
 """ffmpeg audio pipeline + ID3 tagging.
 
-Output: MP3, 128 kbit/s CBR, 44.1 kHz, mono, two-pass loudnorm to -16 LUFS,
+Output: MP3, 128 kbit/s CBR, 44.1 kHz, mono or stereo (user-configurable via
+the Setup page, see Settings.audio_channels), two-pass loudnorm to -16 LUFS,
 leading silence trimmed. ID3 tags and cover art are set with mutagen.
 """
 import json
@@ -125,6 +126,7 @@ def process_audio(
     cover_path: Optional[Path] = None,
     duration_seconds: Optional[int] = None,
     heartbeat: Optional[Callable[[], None]] = None,
+    channels: int = config.AUDIO_CHANNELS,
 ) -> Path:
     """Run the full ffmpeg pipeline and write the tagged MP3 to output_path.
 
@@ -132,6 +134,9 @@ def process_audio(
     the ffmpeg timeout — see _ffmpeg_timeout(). heartbeat, if given, is
     invoked periodically while ffmpeg runs so the stuck-job watchdog
     doesn't misidentify a long-but-healthy encode as stuck — see _run().
+    channels (1=mono, 2=stereo) is caller-supplied rather than read from
+    config directly, since it's a live, user-editable setting (Setup page)
+    rather than a fixed deployment constant — see crud.Settings.audio_channels.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     timeout = _ffmpeg_timeout(duration_seconds)
@@ -167,7 +172,7 @@ def process_audio(
         "ffmpeg", "-hide_banner", "-nostats", "-y",
         "-i", str(input_path),
         "-af", af,
-        "-ac", str(config.AUDIO_CHANNELS),   # mono
+        "-ac", str(channels),
         "-ar", str(config.AUDIO_SAMPLE_RATE),  # 44.1 kHz
         "-c:a", "libmp3lame",
         "-b:a", config.AUDIO_BITRATE,          # 128k CBR

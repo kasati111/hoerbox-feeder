@@ -184,6 +184,7 @@ def setup(request: Request, db: Session = Depends(get_db)):
         "cookies_ok": _cookies_path() is not None,
         "max_items_per_list": crud.get_settings(db).max_items_per_list,
         "max_playlist_length": crud.get_settings(db).max_playlist_length,
+        "audio_channels": crud.get_settings(db).audio_channels,
         **_footer_context(),
     }
     return templates.TemplateResponse(request, "setup.html", ctx)

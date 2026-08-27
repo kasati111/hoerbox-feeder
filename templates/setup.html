@@ -77,6 +77,20 @@
         <span id="max-length-msg"></span>
     </div>
 
+    <div class="setup-card settings-card">
+        <h2>Tonspur</h2>
+        <p class="hint">Betrifft nur neue Downloads – bereits geladene Titel behalten ihre
+           bisherige Tonspur.</p>
+        <div class="settings-row">
+            <select id="audio-channels-input">
+                <option value="1" {% if audio_channels == 1 %}selected{% endif %}>Mono</option>
+                <option value="2" {% if audio_channels == 2 %}selected{% endif %}>Stereo</option>
+            </select>
+            <button type="button" id="audio-channels-save" class="cookie-upload-btn">Speichern</button>
+        </div>
+        <span id="audio-channels-msg"></span>
+    </div>
+
     <p class="hint">Diese Adressen einmalig im Hörspieler als Podcast hinzufügen – für jeden Knopf eine.</p>
     <div class="setup-callout">
         💡 Läuft auf einem Knopf externer Content (z. B. von einer SD-Karte)? Auf den
@@ -195,6 +209,32 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ max_playlist_length: value })
+            }).then(r => r.json());
+            msg.style.color = res.ok ? '#2e7d32' : '#c62828';
+            msg.textContent = res.message;
+        } catch (e) {
+            msg.style.color = '#c62828';
+            msg.textContent = 'Keine Verbindung.';
+        }
+        saveBtn.disabled = false;
+    });
+})();
+
+(function() {
+    const input = document.getElementById('audio-channels-input');
+    const saveBtn = document.getElementById('audio-channels-save');
+    const msg = document.getElementById('audio-channels-msg');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async () => {
+        const value = parseInt(input.value, 10);
+        saveBtn.disabled = true;
+        msg.textContent = '';
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audio_channels: value })
             }).then(r => r.json());
             msg.style.color = res.ok ? '#2e7d32' : '#c62828';
             msg.textContent = res.message;

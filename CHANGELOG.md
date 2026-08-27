@@ -3,6 +3,12 @@
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Hinzugefügt
+- Globale Tonspur-Einstellung (Mono/Stereo) auf der Setup-Seite. Gilt für
+  neue Downloads; bereits geladene Titel behalten ihre bisherige Tonspur.
+
 ## [0.1.0] - 2026-08-27
 
 Erste öffentliche Version.

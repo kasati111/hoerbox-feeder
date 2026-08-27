@@ -126,6 +126,7 @@ def process_job(job_id: int) -> None:
         attempt_count = job.attempt_count or 1
         channel = crud.get_channel(db, channel_id)
         channel_name = channel.name if channel else str(channel_id)
+        audio_channels = crud.get_settings(db).audio_channels
 
     # Storage guard before doing heavy work.
     if not storage_ok():
@@ -174,6 +175,7 @@ def process_job(job_id: int) -> None:
             cover_path=result.thumbnail_path,
             duration_seconds=duration_seconds,
             heartbeat=lambda: _touch_job(job_id),
+            channels=audio_channels,
         )
 
         duration = duration_seconds or audio.get_duration_seconds(final_path)

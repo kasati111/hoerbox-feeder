@@ -682,12 +682,13 @@ def set_channel_active(n: int, payload: ChannelActiveRequest, request: Request, 
 class SettingsRequest(BaseModel):
     max_items_per_list: Optional[int] = None
     max_playlist_length: Optional[int] = None
+    audio_channels: Optional[int] = None
 
 
 @router.post("/settings")
 def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
-    """Each field is optional so the Setup page's two cards can save
-    independently without one field's save resetting the other."""
+    """Each field is optional so the Setup page's cards can save
+    independently without one field's save resetting the others."""
     fields = {}
     messages = []
 
@@ -702,6 +703,15 @@ def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
             return {"ok": False, "message": "Bitte eine Zahl zwischen 1 und 500 eingeben."}
         fields["max_playlist_length"] = payload.max_playlist_length
         messages.append(f"max. {payload.max_playlist_length} Folgen werden je Kanal behalten")
+
+    if payload.audio_channels is not None:
+        if payload.audio_channels not in (1, 2):
+            return {"ok": False, "message": "Bitte Mono oder Stereo wählen."}
+        fields["audio_channels"] = payload.audio_channels
+        # Only future downloads/reprocessing pick this up — existing MP3s on
+        # disk keep whatever channel count they were originally encoded with.
+        label = "Mono" if payload.audio_channels == 1 else "Stereo"
+        messages.append(f"neue Downloads werden ab jetzt in {label} umgewandelt")
 
     if not fields:
         return {"ok": False, "message": "Nichts zu speichern."}

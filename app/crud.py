@@ -75,6 +75,7 @@ def get_settings(db: Session) -> Settings:
             id=1,
             max_items_per_list=config.MAX_INITIAL_PLAYLIST_ITEMS,
             max_playlist_length=config.DEFAULT_RETENTION,
+            audio_channels=config.AUDIO_CHANNELS,
         )
         db.add(settings)
         db.commit()
