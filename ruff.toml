@@ -1,0 +1,25 @@
+target-version = "py311"
+# 100 initially clashed with ~18 pre-existing lines across the codebase, all
+# in the 101-120 range; 120 fits the existing style without reflowing them.
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = [
+    # FastAPI's Depends()/File() in argument defaults is the framework's own
+    # idiom, used throughout this codebase -- not the "mutable default" bug
+    # this rule is meant to catch.
+    "B008",
+    # Optional[X]/List[X] instead of X | None / list[X] is the consistent
+    # style already used across the whole codebase; not worth a mixed-style
+    # diff just to satisfy a newer-syntax preference.
+    "UP006",
+    "UP007",
+    "UP035",
+    "UP045",
+]
+
+[lint.per-file-ignores]
+# Tests import fixtures/helpers via `from x import *`-adjacent patterns and
+# intentionally use broad asserts; keep the signal-to-noise ratio high there.
+"tests/*" = ["F401"]

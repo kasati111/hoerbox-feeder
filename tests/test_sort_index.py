@@ -18,7 +18,7 @@ def test_sort_index_per_channel(db):
 
 def test_reorder_updates_indices(db):
     a = crud.create_item(db, 0, "https://x/1", "Eins")
-    b = crud.create_item(db, 0, "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cartesian_Product_qtl1.svg/1280px-Cartesian_Product_qtl1.svg.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=thumbnail", "Zwei")
+    b = crud.create_item(db, 0, "https://x/2", "Zwei")
     c = crud.create_item(db, 0, "https://x/3", "Drei")
 
     crud.reorder_items(db, 0, [c.id, a.id, b.id])

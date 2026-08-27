@@ -1,5 +1,8 @@
 # hoerbox-feeder
 
+[![CI](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+
 Selbst-gehostete Web-App: per Browser (am Handy, Tablet, PC) einen Link einfügen (YouTube,
 Spotify, Podcast, ...), der Server lädt den Inhalt herunter, wandelt ihn in
 ein einheitliches, normalisiertes MP3-Format um und stellt ihn als
@@ -56,8 +59,12 @@ cd hoerbox-feeder
 docker compose up -d --build
 ```
 
-Danach `http://<deine-server-ip>:8080` im Browser öffnen. Details zu
-Architektur und Entwicklung siehe [DEVELOPER.md](DEVELOPER.md).
+Danach `http://<deine-server-ip>:8080` im Browser öffnen.
+
+**Aktualisieren:** `git pull && docker compose up -d --build`. Für ein
+Deployment ohne Git-Zugriff auf dem Zielserver (Tarball-basiert, inkl.
+Rollback) siehe [DEVELOPER.md § 8](DEVELOPER.md#8-deployment). Details zu
+Architektur und Entwicklung ebenfalls dort.
 
 ## Lizenz
 

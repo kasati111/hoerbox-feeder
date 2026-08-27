@@ -2,7 +2,6 @@
 
 Range support and a correct Content-Length are required by the device player.
 """
-import os
 import re
 from pathlib import Path
 

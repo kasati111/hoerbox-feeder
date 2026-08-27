@@ -9,9 +9,11 @@ from sqlalchemy.orm import sessionmaker
 # Make the package importable.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from app import (
+    crud,  # noqa: E402
+    models,  # noqa: E402,F401
+)
 from app.database import Base  # noqa: E402
-from app import models  # noqa: E402,F401
-from app import crud  # noqa: E402
 
 
 @pytest.fixture()

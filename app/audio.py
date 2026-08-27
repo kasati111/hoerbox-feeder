@@ -10,7 +10,8 @@ import time
 from pathlib import Path
 from typing import Callable, Optional
 
-from mutagen.id3 import APIC, ID3, TALB, TIT2, TRCK, error as id3_error
+from mutagen.id3 import APIC, ID3, TALB, TIT2, TRCK
+from mutagen.id3 import error as id3_error
 from mutagen.mp3 import MP3
 
 from . import config
@@ -62,7 +63,7 @@ def _run(
                     proc.kill()
                     proc.communicate()
                     logger.error("command timed out after %ss: %s", timeout, " ".join(cmd))
-                    raise RuntimeError("Die Aufbereitung des Tons hat zu lange gedauert.")
+                    raise RuntimeError("Die Aufbereitung des Tons hat zu lange gedauert.") from None
     finally:
         if proc.poll() is None:
             proc.kill()

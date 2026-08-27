@@ -1,6 +1,6 @@
 """HTML routes: GET /, GET /kanal/{n}, GET /einrichtung."""
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -11,8 +11,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from .. import config, crud, downloader, worker
-from ..downloader import _cookies_path
 from ..database import get_db
+from ..downloader import _cookies_path
 from ..models import Subscription
 
 router = APIRouter()
@@ -80,7 +80,7 @@ def _item_view(item, jobs_by_item, is_sub: bool, channel_id: int = None, context
     next_attempt_str = None
     if job and job.next_attempt_at and job.next_attempt_at > datetime.utcnow():
         # next_attempt_at is stored naive-UTC; convert to the configured local TZ.
-        local = job.next_attempt_at.replace(tzinfo=timezone.utc).astimezone(config.TZ)
+        local = job.next_attempt_at.replace(tzinfo=UTC).astimezone(config.TZ)
         next_attempt_str = local.strftime("%H:%M")
     return {
         "id": item.id,

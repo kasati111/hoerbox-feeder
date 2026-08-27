@@ -319,29 +319,59 @@ _SPOTDL_CLIENT_SECRET = "..."
 
 ## 8. Deployment
 
-### Docker (empfohlen)
+Zwei Wege, je nachdem ob der Zielserver direkten Zugriff auf GitHub hat.
+
+### Weg A: Git-basiert (empfohlen, siehe auch README)
 
 ```bash
-# Entpacken
-tar -xzf hoerbox-feeder-deploy.tar.gz
+git clone https://github.com/kasati111/hoerbox-feeder.git
 cd hoerbox-feeder
-
-# Starten
 docker compose up -d --build
 
 # Logs verfolgen
 docker compose logs -f
 ```
 
-### Manuelle Installation (Raspberry Pi)
+### Weg B: Tarball-basiert (kein Git/Internetzugang auf dem Zielserver)
+
+Für Server ohne Zugriff auf GitHub (z. B. ein abgeschottetes Heimnetz-Gerät,
+auf das nur per `scp` kopiert wird). Das Archiv lokal bauen und übertragen:
 
 ```bash
-chmod +x schnellstart.sh
+# Lokal, im Repo-Verzeichnis:
+tar czf hoerbox-feeder-deploy.tar.gz --exclude=.git .
+scp hoerbox-feeder-deploy.tar.gz user@zielserver:/opt/
+```
+
+**Erstinstallation** – `schnellstart.sh` prüft Docker, legt
+`/opt/hoerbox-feeder` an, entpackt das Archiv dorthin und baut/startet den
+Container (`docker compose up -d --build`):
+
+```bash
+cd /opt
+chmod +x schnellstart.sh   # aus dem entpackten Archiv, falls nicht schon
 sudo ./schnellstart.sh
 ```
 
-Das Skript installiert Node.js 22 über NodeSource, richtet systemd ein und
-startet den Dienst.
+**Updates** einer bestehenden Tarball-Installation – `update.sh` prüft das
+neue Archiv auf Vollständigkeit (fängt abgebrochene Uploads ab), sichert den
+aktuellen Code nach `backup_<timestamp>/` (Rollback möglich), entpackt das
+neue Archiv darüber, baut das Image ohne Cache neu (`--no-cache`, damit
+geänderte Templates/Static-Dateien sicher übernommen werden) und macht
+danach einen kurzen Health-Check:
+
+```bash
+cd /opt/hoerbox-feeder
+# neues hoerbox-feeder-deploy.tar.gz vorher dorthin kopiert haben
+./update.sh
+```
+
+Rollback bei Problemen steht am Ende der Skript-Ausgabe (`cp -r
+backup_<timestamp>/* . && docker compose up -d --build`).
+
+Für **beide Wege** gilt: Kanal-Farben/-Namen werden beim Container-Start
+automatisch aus `app/config.py` synchronisiert (siehe `crud.seed_channels()`)
+– kein manueller Datenbank-Befehl nötig, auch nicht nach einem Update.
 
 ### Produktions-URL
 

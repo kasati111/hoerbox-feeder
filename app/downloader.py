@@ -210,7 +210,7 @@ def _resolve_spotify(spotify_url: str) -> "SourceInfo":
         raise RuntimeError(
             "spotdl ist nicht installiert. "
             "Bitte 'pip install spotdl' ausführen."
-        )
+        ) from None
 
     # Spotify web links may carry an intl-XX locale prefix that spotdl
     # does not understand → strip it before querying the Spotify API.

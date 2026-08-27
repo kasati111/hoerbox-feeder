@@ -284,7 +284,7 @@ def channels_with_unreviewed_alts(db: Session) -> dict:
         .group_by(Item.channel_id)
         .all()
     )
-    return {channel_id: count for channel_id, count in rows}
+    return dict(rows)
 
 
 def items_per_channel(db: Session) -> dict:
@@ -297,7 +297,7 @@ def items_per_channel(db: Session) -> dict:
         .group_by(Item.channel_id)
         .all()
     )
-    return {channel_id: count for channel_id, count in rows}
+    return dict(rows)
 
 
 def list_done_items(db: Session, channel_id: int) -> List[Item]:
@@ -540,7 +540,7 @@ def reset_running_jobs(db: Session) -> int:
 
 def claim_next_job(db: Session) -> Optional[Job]:
     """Pick the next queued job whose next_attempt_at is due; mark it running.
-    
+
     Skips jobs with cancelled items.
     """
     now = datetime.utcnow()
@@ -554,7 +554,7 @@ def claim_next_job(db: Session) -> Optional[Job]:
         )
         if job is None:
             return None
-        
+
         # Skip jobs whose item was cancelled
         if job.item_id:
             item = db.get(Item, job.item_id)
@@ -563,7 +563,7 @@ def claim_next_job(db: Session) -> Optional[Job]:
                 job.updated_at = now
                 db.commit()
                 continue  # try next job
-        
+
         job.status = "running"
         job.attempt_count = (job.attempt_count or 0) + 1
         job.updated_at = now

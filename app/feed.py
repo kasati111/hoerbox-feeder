@@ -4,7 +4,7 @@ The feed is the machine-facing output consumed by the device; user-facing UI
 text never mentions it by name.
 """
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -63,7 +63,7 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
         fe.podcast.itunes_duration(_fmt_duration(item.duration_seconds))
         pub = item.created_at or datetime.utcnow()
         if pub.tzinfo is None:
-            pub = pub.replace(tzinfo=timezone.utc)
+            pub = pub.replace(tzinfo=UTC)
         fe.pubDate(pub)
 
     return fg.rss_str(pretty=True).decode("utf-8")

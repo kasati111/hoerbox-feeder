@@ -257,10 +257,10 @@ def cancel_job(job_id: int, db: Session = Depends(get_db)):
     job = crud.get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Auftrag nicht gefunden.")
-    
+
     if job.status not in ("queued", "running"):
         return {"ok": False, "message": "Der Auftrag kann nicht mehr abgebrochen werden."}
-    
+
     crud.update_job(db, job_id, status="cancelled", error_text="Abgebrochen")
     if job.item_id:
         crud.update_item(db, job.item_id, status="cancelled", error_text="Abgebrochen")
@@ -745,7 +745,7 @@ def sd_export_zip(db: Session = Depends(get_db)):
     except Exception as exc:  # noqa: BLE001
         os.unlink(tmp_path)
         logger.error("sd export zip failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Die ZIP-Datei konnte nicht erstellt werden.")
+        raise HTTPException(status_code=500, detail="Die ZIP-Datei konnte nicht erstellt werden.") from exc
     return FileResponse(
         tmp_path,
         media_type="application/zip",
@@ -760,15 +760,15 @@ def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_
     channel = crud.get_channel(db, channel_id)
     if channel is None:
         raise HTTPException(status_code=404, detail="Kanal nicht gefunden.")
-    
+
     # Security: prevent path traversal
     if "/" in filename or ".." in filename or filename.startswith("_"):
         raise HTTPException(status_code=400, detail="Ungültiger Dateiname.")
-    
+
     file_path = config.AUDIO_DIR / str(channel_id) / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
-    
+
     try:
         file_path.unlink()
         # Also remove corresponding item from DB if exists
@@ -780,7 +780,7 @@ def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_
         return {"ok": True, "message": "Datei gelöscht."}
     except Exception as exc:  # noqa: BLE001
         logger.error("delete file failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Löschen fehlgeschlagen.")
+        raise HTTPException(status_code=500, detail="Löschen fehlgeschlagen.") from exc
 
 
 @router.post("/cookies-upload")
@@ -809,7 +809,7 @@ async def upload_cookies(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, fh)
     except Exception as exc:
         logger.error("cookies upload failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Speichern fehlgeschlagen.")
+        raise HTTPException(status_code=500, detail="Speichern fehlgeschlagen.") from exc
 
     size = dest.stat().st_size
     logger.info("cookies.txt uploaded, %d bytes", size)
@@ -822,7 +822,7 @@ def delete_all_audio_files(channel_id: int, request: Request, db: Session = Depe
     channel = crud.get_channel(db, channel_id)
     if channel is None:
         raise HTTPException(status_code=404, detail="Kanal nicht gefunden.")
-    
+
     channel_dir = config.AUDIO_DIR / str(channel_id)
     deleted = 0
     active_names = crud.active_filenames(db, channel_id)
@@ -843,11 +843,11 @@ def delete_all_audio_files(channel_id: int, request: Request, db: Session = Depe
     items = crud.list_active_items(db, channel_id)
     for item in items:
         crud.delete_item(db, item.id)
-    
+
     # Regenerate empty feed
     try:
         feed.write_feed_file(db, channel_id, str(request.base_url).rstrip("/"))
     except Exception:  # noqa: BLE001
         pass
-    
+
     return {"ok": True, "message": f"{deleted} Dateien gelöscht.", "count": deleted}
