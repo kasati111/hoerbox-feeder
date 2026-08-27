@@ -66,7 +66,9 @@ Projekt übernimmt keine Haftung für die Art, wie es genutzt wird.
 ## Für Admins
 
 Dieser Abschnitt richtet sich an die Person, die hoerbox-feeder installiert
-und betreut – nicht an die Eltern, die später nur Links einfügen.
+und betreut – nicht an die Eltern, die später nur Links einfügen. Für sie
+gibt es das separate [Benutzerhandbuch (PDF)](docs/BENUTZERHANDBUCH.pdf) –
+am besten nach der Einrichtung weiterreichen.
 
 ### Installation
 
