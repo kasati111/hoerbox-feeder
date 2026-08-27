@@ -34,8 +34,7 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
     base_url e.g. "http://192.168.1.50:8080" (no trailing slash).
     """
     base_url = base_url.rstrip("/")
-    settings = crud.get_settings(db)
-    lang, skin = settings.language, settings.skin
+    lang, skin = crud.lang_skin(db)
     channel = crud.get_channel(db, channel_id)
     ch_name = i18n.channel_label(channel, lang, skin) if channel else str(channel_id)
 

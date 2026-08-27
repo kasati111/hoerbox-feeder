@@ -30,11 +30,31 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["js"] = lambda s: Markup(json.dumps(s, ensure_ascii=False))
 
 
-def _base_context(db: Session) -> dict:
+# Small js.*-prefixed subset embedded as JSON for static/app.js — not the
+# whole STRINGS table, just what the client actually needs. Keys keep their
+# full "js." prefix so they match the i18n('js.xxx') call sites in app.js
+# verbatim. STRINGS never changes at runtime and there are only 2 langs, so
+# this is precomputed once at import time instead of on every request.
+_JS_I18N_JSON = {
+    lang: json.dumps(
+        {
+            key: entry.get(lang) or entry.get(i18n.DEFAULT_LANG)
+            for key, entry in i18n.STRINGS.items()
+            if key.startswith("js.")
+        },
+        ensure_ascii=False,
+    )
+    for lang in i18n.LANGS
+}
+
+
+def _base_context(db: Session, settings=None) -> dict:
     """Shared template context: language/skin from the live Settings row,
     plus the `t()` translation function and channel-display helpers bound to
-    them, so templates never have to thread lang/skin through themselves."""
-    settings = crud.get_settings(db)
+    them, so templates never have to thread lang/skin through themselves.
+    Pass an already-fetched `settings` row to avoid a redundant query when
+    the caller needs other fields off it too."""
+    settings = settings or crud.get_settings(db)
     lang = settings.language
     skin = settings.skin
     return {
@@ -44,19 +64,10 @@ def _base_context(db: Session) -> dict:
         "channel_label": lambda ch: i18n.channel_label(ch, lang, skin),
         "channel_color_hex": lambda ch: i18n.channel_color_hex(ch, skin),
         "legal_notice": i18n.t("legal_notice", lang),
-        # Small js.*-prefixed subset embedded as JSON for static/app.js —
-        # not the whole STRINGS table, just what the client actually needs.
         # Pre-serialized here (not via a Jinja `tojson` filter, whose
         # availability isn't guaranteed on a plain Jinja2Templates env) and
         # marked `|safe` in base.html.
-        "js_i18n_json": json.dumps(
-            {
-                key.removeprefix("js."): entry.get(lang) or entry.get(i18n.DEFAULT_LANG)
-                for key, entry in i18n.STRINGS.items()
-                if key.startswith("js.")
-            },
-            ensure_ascii=False,
-        ),
+        "js_i18n_json": _JS_I18N_JSON[lang],
     }
 
 
@@ -140,7 +151,8 @@ def _item_view(item, jobs_by_item, is_sub: bool, lang: str, channel_id: int = No
 
 @router.get("/kanal/{n}", response_class=HTMLResponse)
 def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
-    lang = crud.get_settings(db).language
+    settings = crud.get_settings(db)
+    lang = settings.language
     channel = crud.get_channel(db, n)
     if channel is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
@@ -188,7 +200,7 @@ def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
         "total_playtime": _fmt_playtime(total_seconds, lang),
         "abo_enabled": abo_enabled,
         "has_abo": has_abo,
-        **_base_context(db),
+        **_base_context(db, settings=settings),
     }
     return templates.TemplateResponse(request, "channel.html", ctx)
 
@@ -216,14 +228,15 @@ def setup(request: Request, db: Session = Depends(get_db)):
             "address": addr,
             "qr": _qr_data_url(addr),
         })
+    settings = crud.get_settings(db)
     ctx = {
         "request": request,
         "addresses": addresses,
         "cookies_ok": _cookies_path() is not None,
-        "max_items_per_list": crud.get_settings(db).max_items_per_list,
-        "max_playlist_length": crud.get_settings(db).max_playlist_length,
-        "audio_channels": crud.get_settings(db).audio_channels,
-        **_base_context(db),
+        "max_items_per_list": settings.max_items_per_list,
+        "max_playlist_length": settings.max_playlist_length,
+        "audio_channels": settings.audio_channels,
+        **_base_context(db, settings=settings),
     }
     return templates.TemplateResponse(request, "setup.html", ctx)
 

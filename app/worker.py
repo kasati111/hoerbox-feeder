@@ -51,11 +51,6 @@ def disk_usage_summary(path: Path = None) -> dict:
     }
 
 
-def _lang_skin(db) -> tuple:
-    settings = crud.get_settings(db)
-    return settings.language, settings.skin
-
-
 def channel_with_most_items(db) -> int:
     """Suggest which channel could be tidied up (has the most items)."""
     best_id, best_count = 0, -1
@@ -138,7 +133,7 @@ def process_job(job_id: int) -> None:
     # Storage guard before doing heavy work.
     if not storage_ok():
         with session_scope() as db:
-            lang, skin = _lang_skin(db)
+            lang, skin = crud.lang_skin(db)
             tidy = channel_with_most_items(db)
             tidy_channel = crud.get_channel(db, tidy)
             tidy_name = i18n.channel_label(tidy_channel, lang, skin) if tidy_channel else str(tidy)
@@ -240,7 +235,7 @@ def _ensure_real_title(db, item) -> str:
 
 def handle_failure(job_id: int, item_id: int, attempt_count: int, error: str) -> None:
     with session_scope() as db:
-        lang, _skin = _lang_skin(db)
+        lang, _skin = crud.lang_skin(db)
         user_msg = i18n.t("worker.failed_prefix", lang, error=error)
         item = crud.get_item(db, item_id)
         title = _ensure_real_title(db, item) if item is not None else None
@@ -321,7 +316,7 @@ def check_stuck_jobs() -> int:
     """
     cutoff = datetime.utcnow() - timedelta(minutes=STUCK_JOB_TIMEOUT_MINUTES)
     with session_scope() as db:
-        lang, _skin = _lang_skin(db)
+        lang, _skin = crud.lang_skin(db)
         stuck = (
             db.query(Job)
             .filter(Job.status == "running", Job.updated_at < cutoff)

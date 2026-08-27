@@ -85,6 +85,14 @@ def get_settings(db: Session) -> Settings:
     return settings
 
 
+def lang_skin(db: Session) -> tuple[str, str]:
+    """Convenience accessor for the two Settings fields almost every
+    request-handling function needs — the single canonical place for this
+    lookup so api.py/worker.py/feed.py don't each keep their own copy."""
+    settings = get_settings(db)
+    return settings.language, settings.skin
+
+
 def update_settings(db: Session, **fields) -> Settings:
     settings = get_settings(db)
     for key, value in fields.items():

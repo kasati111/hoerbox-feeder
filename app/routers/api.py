@@ -28,11 +28,6 @@ def _base_url(request: Request) -> str:
     return str(request.base_url).rstrip("/")
 
 
-def _lang_skin(db: Session) -> tuple[str, str]:
-    settings = crud.get_settings(db)
-    return settings.language, settings.skin
-
-
 class AddRequest(BaseModel):
     url: str
     channel: int
@@ -43,7 +38,8 @@ class AddRequest(BaseModel):
 @router.post("/add")
 def add_content(payload: AddRequest, request: Request, db: Session = Depends(get_db)):
     """Add a link to a channel. Series become auto-subscriptions."""
-    lang, skin = _lang_skin(db)
+    settings = crud.get_settings(db)
+    lang, skin = settings.language, settings.skin
     channel = crud.get_channel(db, payload.channel)
     if channel is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
@@ -82,7 +78,7 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
 
     # Limit initial items for large playlists to prevent request timeouts and wasted downloads.
     # Subscriptions will automatically fetch new entries later.
-    limit = min(total_entries, crud.get_settings(db).max_items_per_list)
+    limit = min(total_entries, settings.max_items_per_list)
     entries_to_process = info.entries[:limit]
 
     # Series -> create an auto-subscription (default on) *before* creating the
@@ -209,7 +205,7 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
 
 @router.get("/job/{job_id}/status")
 def job_status(job_id: int, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     job = crud.get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.job_not_found", lang))
@@ -266,7 +262,7 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
 @router.delete("/job/{job_id}")
 def cancel_job(job_id: int, db: Session = Depends(get_db)):
     """Cancel a queued or running job."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     job = crud.get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.job_not_found", lang))
@@ -286,7 +282,7 @@ def retry_item(item_id: int, db: Session = Depends(get_db)):
     """Retry a failed or backing-off item right now, instead of waiting out
     the exponential backoff (or giving up after MAX_ATTEMPTS).
     """
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
@@ -313,7 +309,7 @@ def find_alternative(item_id: int, db: Session = Depends(get_db)):
     needed. Sets Item.alt_source_url rather than overwriting source_url, so
     a subscription-linked item keeps matching correctly on future syncs.
     """
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
@@ -358,7 +354,7 @@ def search_alternative(item_id: int, payload: SearchAlternativeRequest, db: Sess
     DB mutation, no download. The human-verifiable counterpart to the blind
     ytsearch1: guess: shows title/uploader/duration/thumbnail so a parent can
     actually tell the candidates apart before committing to one."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_item(db, item_id) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     query = payload.query.strip()
@@ -393,7 +389,7 @@ def pick_alternative(item_id: int, payload: PickAlternativeRequest, db: Session 
     retry) and marks it reviewed — a human saw the thumbnail/title/uploader
     and chose it, so it shouldn't keep showing the "please check this" hint.
     """
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
@@ -419,7 +415,7 @@ def confirm_alternative(item_id: int, db: Session = Depends(get_db)):
     """Dismiss the "please check this" hint without touching the audio —
     for when a parent has listened/looked and the auto-substituted content
     is actually fine as-is."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
@@ -433,7 +429,7 @@ def retry_all_problems(db: Session = Depends(get_db)):
     crud.list_problem_items) — backs the Start page's single "Alle nochmal
     versuchen" action, which replaces a per-item card list there; individual
     handling still lives in the channel view via retry_item()."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     items = crud.list_problem_items(db)
     for item in items:
         job = crud.latest_job_for_item(db, item.id) or crud.create_job(db, item.id)
@@ -461,7 +457,7 @@ def find_alternative_all_problems(db: Session = Depends(get_db)):
     Items with a placeholder title (no real title to search with) are
     skipped rather than fed a guaranteed-wrong blind search — see
     find_alternative()'s single-item guard for why."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     items = [i for i in crud.list_problem_items(db) if not downloader.is_placeholder_title(i.title)]
     for item in items:
         query = downloader.default_search_query(item.title, crud.item_search_context(db, item))
@@ -490,7 +486,7 @@ class ReorderRequest(BaseModel):
 @router.post("/kanal/{n}/reorder")
 def reorder(n: int, payload: ReorderRequest, request: Request,
             db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_channel(db, n) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     crud.reorder_items(db, n, payload.order)
@@ -510,7 +506,7 @@ def reorder_blocks(n: int, payload: ReorderBlocksRequest, request: Request,
                     db: Session = Depends(get_db)):
     """Reorder a channel's top-level list of blocks/singles (separate payload
     shape from /reorder's flat item-id list, so existing callers keep working)."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_channel(db, n) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     crud.reorder_blocks(db, n, payload.order)
@@ -529,7 +525,7 @@ class ReorderSubscriptionRequest(BaseModel):
 def reorder_subscription(sub_id: int, payload: ReorderSubscriptionRequest, request: Request,
                           db: Session = Depends(get_db)):
     """Reorder the episodes within one playlist block."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     sub = crud.get_subscription(db, sub_id)
     if sub is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
@@ -588,7 +584,7 @@ def _delete_subscription_and_files(db: Session, sub_id: int, base_url: str) -> i
 
 @router.delete("/item/{item_id}")
 def delete_item(item_id: int, request: Request, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if not _delete_item_and_file(db, item_id, _base_url(request)):
         raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     return {"ok": True, "message": i18n.t("api.entry_deleted", lang)}
@@ -597,7 +593,7 @@ def delete_item(item_id: int, request: Request, db: Session = Depends(get_db)):
 @router.delete("/problems/delete-all")
 def delete_all_problems(request: Request, db: Session = Depends(get_db)):
     """Bulk version of delete_item() for every currently flagged item."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     items = crud.list_problem_items(db)
     base_url = _base_url(request)
     count = 0
@@ -610,7 +606,7 @@ def delete_all_problems(request: Request, db: Session = Depends(get_db)):
 
 @router.delete("/subscription/{sub_id}")
 def delete_subscription(sub_id: int, request: Request, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     count = _delete_subscription_and_files(db, sub_id, _base_url(request))
@@ -619,7 +615,7 @@ def delete_subscription(sub_id: int, request: Request, db: Session = Depends(get
 
 @router.post("/item/{item_id}/park")
 def park_item(item_id: int, request: Request, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     try:
         library.park_item(db, item_id, _base_url(request))
     except library.LibraryError as exc:
@@ -634,7 +630,7 @@ class AssignRequest(BaseModel):
 @router.post("/item/{item_id}/assign")
 def assign_item(item_id: int, payload: AssignRequest, request: Request,
                  db: Session = Depends(get_db)):
-    lang, skin = _lang_skin(db)
+    lang, skin = crud.lang_skin(db)
     try:
         library.reassign_item(db, item_id, payload.channel_id, _base_url(request))
     except library.LibraryError as exc:
@@ -645,7 +641,7 @@ def assign_item(item_id: int, payload: AssignRequest, request: Request,
 
 @router.post("/subscription/{sub_id}/park")
 def park_subscription(sub_id: int, request: Request, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     try:
@@ -659,7 +655,7 @@ def park_subscription(sub_id: int, request: Request, db: Session = Depends(get_d
 @router.post("/subscription/{sub_id}/assign")
 def assign_subscription(sub_id: int, payload: AssignRequest, request: Request,
                          db: Session = Depends(get_db)):
-    lang, skin = _lang_skin(db)
+    lang, skin = crud.lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     try:
@@ -679,7 +675,7 @@ class AboToggleRequest(BaseModel):
 
 @router.post("/kanal/{n}/abo-toggle")
 def abo_toggle(n: int, payload: AboToggleRequest, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_channel(db, n) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     subs = crud.set_subscription_enabled(db, n, payload.enabled)
@@ -701,7 +697,7 @@ def park_channel(n: int, request: Request, db: Session = Depends(get_db)):
     does for a single playlist) -- otherwise the next Abo-Sync would just
     pull the parked episodes' successors straight back into the now-empty
     channel, undoing the point of "move everything out"."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if crud.get_channel(db, n) is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     count = library.park_channel(db, n, _base_url(request))
@@ -717,7 +713,7 @@ class ChannelActiveRequest(BaseModel):
 
 @router.post("/kanal/{n}/set-active")
 def set_channel_active(n: int, payload: ChannelActiveRequest, request: Request, db: Session = Depends(get_db)):
-    lang, skin = _lang_skin(db)
+    lang, skin = crud.lang_skin(db)
     channel = crud.get_channel(db, n)
     if channel is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
@@ -753,7 +749,12 @@ class SettingsRequest(BaseModel):
 def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
     """Each field is optional so the Setup page's cards can save
     independently without one field's save resetting the others."""
-    lang, _skin = _lang_skin(db)  # current language, used for validation messages
+    lang, _skin = crud.lang_skin(db)  # current language, used for validation messages
+    # If this request also changes the language itself, every message below
+    # (not just the language one) should read in the newly-selected language
+    # — otherwise saving language+skin together produces a bilingual summary
+    # line. Resolved up front so all per-field messages agree.
+    summary_lang = payload.language if payload.language is not None else lang
     fields = {}
     messages = []
 
@@ -761,13 +762,13 @@ def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
         if not (1 <= payload.max_items_per_list <= 500):
             return {"ok": False, "message": i18n.t("api.number_range_error", lang)}
         fields["max_items_per_list"] = payload.max_items_per_list
-        messages.append(i18n.t("api.max_items_saved", lang, n=payload.max_items_per_list))
+        messages.append(i18n.t("api.max_items_saved", summary_lang, n=payload.max_items_per_list))
 
     if payload.max_playlist_length is not None:
         if not (1 <= payload.max_playlist_length <= 500):
             return {"ok": False, "message": i18n.t("api.number_range_error", lang)}
         fields["max_playlist_length"] = payload.max_playlist_length
-        messages.append(i18n.t("api.max_length_saved", lang, n=payload.max_playlist_length))
+        messages.append(i18n.t("api.max_length_saved", summary_lang, n=payload.max_playlist_length))
 
     if payload.audio_channels is not None:
         if payload.audio_channels not in (1, 2):
@@ -775,8 +776,11 @@ def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
         fields["audio_channels"] = payload.audio_channels
         # Only future downloads/reprocessing pick this up — existing MP3s on
         # disk keep whatever channel count they were originally encoded with.
-        label = i18n.t("setup.audio_mono", lang) if payload.audio_channels == 1 else i18n.t("setup.audio_stereo", lang)
-        messages.append(i18n.t("api.audio_channels_saved", lang, label=label))
+        label = (
+            i18n.t("setup.audio_mono", summary_lang) if payload.audio_channels == 1
+            else i18n.t("setup.audio_stereo", summary_lang)
+        )
+        messages.append(i18n.t("api.audio_channels_saved", summary_lang, label=label))
 
     if payload.language is not None:
         if payload.language not in i18n.LANGS:
@@ -789,22 +793,18 @@ def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
         messages.append(i18n.t("api.language_saved", new_lang, label=label))
 
     if payload.skin is not None:
-        if payload.skin not in ("colors", "numbers"):
+        if payload.skin not in i18n.SKINS:
             return {"ok": False, "message": i18n.t("api.choose_skin", lang)}
         fields["skin"] = payload.skin
         messages.append(
-            i18n.t("api.skin_saved_colors", lang) if payload.skin == "colors"
-            else i18n.t("api.skin_saved_numbers", lang)
+            i18n.t("api.skin_saved_colors", summary_lang) if payload.skin == "colors"
+            else i18n.t("api.skin_saved_numbers", summary_lang)
         )
 
     if not fields:
         return {"ok": False, "message": i18n.t("api.nothing_to_save", lang)}
 
     crud.update_settings(db, **fields)
-    # If the language itself just changed, the combined summary line below
-    # should read in the new language too (matches the per-field message
-    # above, and it's what the user is about to see after the reload).
-    summary_lang = payload.language if payload.language is not None else lang
     return {"ok": True, "message": i18n.t("api.saved_prefix", summary_lang, details=", ".join(messages))}
 
 
@@ -814,7 +814,7 @@ class SDExportRequest(BaseModel):
 
 @router.post("/sd-export")
 def sd_export_endpoint(payload: SDExportRequest, db: Session = Depends(get_db)):
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     try:
         result = sd_export.export_to_sd(db, payload.path)
         return result
@@ -835,7 +835,7 @@ def sd_export_zip(db: Session = Depends(get_db)):
     rather than held in memory, since the whole library can run into the
     hundreds of MB.
     """
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     fd, tmp_path = tempfile.mkstemp(suffix=".zip")
     os.close(fd)
     try:
@@ -855,7 +855,7 @@ def sd_export_zip(db: Session = Depends(get_db)):
 @router.delete("/audio/{channel_id}/{filename}")
 def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_db)):
     """Delete a single audio file from a channel."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     channel = crud.get_channel(db, channel_id)
     if channel is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found_short", lang))
@@ -885,7 +885,7 @@ def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_
 @router.post("/cookies-upload")
 async def upload_cookies(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Accept a cookies.txt upload and save it to the data directory."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     if not file.filename:
         raise HTTPException(status_code=400, detail=i18n.t("api.no_file_uploaded", lang))
 
@@ -919,7 +919,7 @@ async def upload_cookies(file: UploadFile = File(...), db: Session = Depends(get
 @router.delete("/audio/{channel_id}")
 def delete_all_audio_files(channel_id: int, request: Request, db: Session = Depends(get_db)):
     """Delete all audio files from a channel."""
-    lang, _skin = _lang_skin(db)
+    lang, _skin = crud.lang_skin(db)
     channel = crud.get_channel(db, channel_id)
     if channel is None:
         raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found_short", lang))

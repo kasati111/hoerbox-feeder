@@ -12,6 +12,9 @@ templates/base.html).
 LANGS = ("de", "en")
 DEFAULT_LANG = "de"
 
+SKINS = ("colors", "numbers")
+DEFAULT_SKIN = "colors"
+
 # Channel colors double as their own name (see config.CHANNELS) -- the
 # `channel.color` column value (violet/red/darkblue/...) is the stable,
 # language-independent lookup key here.
@@ -521,8 +524,24 @@ STRINGS = {
         "en": "The content isn't available.",
     },
     "downloader.spotdl_missing": {
-        "de": "Bitte 'pip install spotdl' ausführen.",
-        "en": "Please run 'pip install spotdl'.",
+        "de": "spotdl ist nicht installiert. Bitte 'pip install spotdl' ausführen.",
+        "en": "spotdl is not installed. Please run 'pip install spotdl'.",
+    },
+    "downloader.spotify_query_failed": {
+        "de": "Spotify konnte nicht gelesen werden: {error}",
+        "en": "Could not read from Spotify: {error}",
+    },
+    "downloader.spotify_no_match": {
+        "de": "Kein passender Inhalt auf Spotify gefunden.",
+        "en": "No matching content found on Spotify.",
+    },
+    "downloader.address_unreadable": {
+        "de": "Die Adresse konnte nicht gelesen werden.",
+        "en": "The address could not be read.",
+    },
+    "downloader.file_not_loaded": {
+        "de": "Die Datei konnte nicht geladen werden.",
+        "en": "The file could not be loaded.",
     },
 
     # --- sd_export.py -----------------------------------------------------------

@@ -20,6 +20,13 @@ const hoerbox = (function () {
         return text;
     }
 
+    // Wrap a title in the language-appropriate quotation marks -- German
+    // „low-high", English "curly" -- mirrors app/i18n.py's quote() helper
+    // so titles look right regardless of window.HOERBOX_LANG.
+    function quote(text) {
+        return window.HOERBOX_LANG === 'en' ? '“' + text + '”' : '„' + text + '“';
+    }
+
     // The channel button's display label (a color name, or "Taste N" in the
     // numbered skin — see channel_label() server-side) shown alongside a
     // title so a status/error line makes sense without page context — e.g.
@@ -33,7 +40,7 @@ const hoerbox = (function () {
     function titleWithChannel(title) {
         if (!title) return null;
         const channel = selectedChannelName();
-        return '„' + title + '“' + (channel ? ' (' + channel + ')' : '');
+        return quote(title) + (channel ? ' (' + channel + ')' : '');
     }
 
     // ---- Index page --------------------------------------------------------
@@ -241,7 +248,7 @@ const hoerbox = (function () {
             if (statusDetailEl) {
                 if (currentDetail && currentDetail.text) {
                     statusDetailEl.textContent = i18n('js.status.current_label') + ' '
-                        + (currentDetail.title ? '„' + currentDetail.title + '“ – ' : '')
+                        + (currentDetail.title ? quote(currentDetail.title) + ' – ' : '')
                         + currentDetail.text;
                     statusDetailEl.hidden = false;
                 } else {

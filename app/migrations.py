@@ -10,6 +10,8 @@ import logging
 
 from sqlalchemy import inspect, text
 
+from . import config
+
 logger = logging.getLogger("hoerbox.migrations")
 
 _NEW_COLUMNS = [
@@ -21,7 +23,11 @@ _NEW_COLUMNS = [
     ("item", "alt_source_reviewed", "INTEGER NOT NULL DEFAULT 0"),
     ("channel", "active", "INTEGER NOT NULL DEFAULT 1"),
     ("settings", "audio_channels", "INTEGER NOT NULL DEFAULT 1"),
-    ("settings", "language", "TEXT NOT NULL DEFAULT 'de'"),
+    # Existing installs upgrading from a pre-i18n version get backfilled from
+    # the current LANG env var here, same as a brand-new install's Settings
+    # row would be seeded by crud.get_settings() -- a hardcoded 'de' default
+    # would silently ignore an operator's LANG=en on upgrade.
+    ("settings", "language", f"TEXT NOT NULL DEFAULT '{config.LANG}'"),
     ("settings", "skin", "TEXT NOT NULL DEFAULT 'colors'"),
 ]
 

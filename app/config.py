@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from . import i18n
+
 # --- Timezone (Europe/Berlin everywhere) ------------------------------------
 TIMEZONE_NAME = os.getenv("TZ", "Europe/Berlin")
 TZ = ZoneInfo(TIMEZONE_NAME)
@@ -17,9 +19,9 @@ TZ = ZoneInfo(TIMEZONE_NAME)
 # page. Validated against the supported set: this container doesn't set a
 # system LANG itself, but if an operator's environment ever does (locale
 # vars are common), a value like "C.UTF-8" must not silently become the
-# app's UI language -- fall back to "de" instead.
-_lang_env = os.getenv("LANG", "de").split(".")[0].split("_")[0].lower()
-LANG = _lang_env if _lang_env in ("de", "en") else "de"
+# app's UI language -- fall back to i18n.DEFAULT_LANG instead.
+_lang_env = os.getenv("LANG", i18n.DEFAULT_LANG).split(".")[0].split("_")[0].lower()
+LANG = _lang_env if _lang_env in i18n.LANGS else i18n.DEFAULT_LANG
 
 # --- Paths ------------------------------------------------------------------
 # Inside the container these live on named volumes (see docker-compose.yml).

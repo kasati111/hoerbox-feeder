@@ -209,10 +209,7 @@ def _resolve_spotify(spotify_url: str, lang: str = "de") -> "SourceInfo":
     try:
         from spotdl import Spotdl  # noqa: F401 – ensure import available
     except ImportError:
-        raise RuntimeError(
-            "spotdl ist nicht installiert. "
-            "Bitte 'pip install spotdl' ausführen."
-        ) from None
+        raise RuntimeError(i18n.t("downloader.spotdl_missing", lang)) from None
 
     # Spotify web links may carry an intl-XX locale prefix that spotdl
     # does not understand → strip it before querying the Spotify API.
@@ -223,11 +220,11 @@ def _resolve_spotify(spotify_url: str, lang: str = "de") -> "SourceInfo":
         songs = spotdl_client.search([spotify_url])
     except Exception as exc:
         raise RuntimeError(
-            f"Spotify konnte nicht gelesen werden: {exc}"
+            i18n.t("downloader.spotify_query_failed", lang, error=exc)
         ) from exc
 
     if not songs:
-        raise RuntimeError("Kein passender Inhalt auf Spotify gefunden.")
+        raise RuntimeError(i18n.t("downloader.spotify_no_match", lang))
 
     entries: List[SourceEntry] = []
     for song in songs:
@@ -280,7 +277,7 @@ def analyze(url: str, lang: str = "de") -> SourceInfo:
         info = ydl.extract_info(url, download=False)
 
     if info is None:
-        raise RuntimeError("Die Adresse konnte nicht gelesen werden.")
+        raise RuntimeError(i18n.t("downloader.address_unreadable", lang))
 
     kind = _classify(info, url)
     entries: List[SourceEntry] = []
@@ -519,7 +516,7 @@ def download_audio(
     if info is None:
         if last_error is not None:
             raise RuntimeError(str(last_error)) from last_error
-        raise RuntimeError("Der Inhalt ist nicht verfügbar.")
+        raise RuntimeError(i18n.t("downloader.content_unavailable", lang))
 
     # ytsearch1:/ytsearchmusic1: wrap the real entry in a playlist dict.
     # Unwrap to the first entry so all subsequent field access works uniformly.
@@ -549,7 +546,7 @@ def download_audio(
         if matches:
             audio_path = matches[0]
     if audio_path is None or not audio_path.exists():
-        raise RuntimeError("Die Datei konnte nicht geladen werden.")
+        raise RuntimeError(i18n.t("downloader.file_not_loaded", lang))
 
     # thumbnail
     thumb_path = None
