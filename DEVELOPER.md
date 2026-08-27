@@ -511,6 +511,43 @@ In `requirements.txt` explizit `starlette>=1.0.0` dokumentiert.
 | Scheduler startet nicht | APScheduler-Version | apscheduler≥3.10 |
 | „Kein Platz mehr" erscheint sofort beim Hinzufügen | `STORAGE_WARN_MB` zu hoch; Host-Dateisystem hat weniger freien Speicher als der Schwellwert | Standard ist 100 MB. Mit `df -h /opt/hoerbox-feeder-data` auf dem Host prüfen. Schwellwert per Env-Var anpassen: `STORAGE_WARN_MB=50` in `docker-compose.yml`. |
 | Icons haben einen schwarzen oder dunklen Rahmen | Browser-/PWA-Cache zeigt alte Version | Browser-Cache leeren (Hard Refresh: Strg+Umschalt+R). Die PNG-Icons haben transparenten Hintergrund. |
+| Clipboard-Button (📋) tut nichts oder wirft einen Fehler | Kein HTTPS (Clipboard API verlangt secure context) | Siehe §13.1 |
+
+### 13.1 Clipboard-Einfügen funktioniert nicht (fehlendes HTTPS)
+
+Der 📋-Button neben dem URL-Feld auf der Startseite nutzt
+`navigator.clipboard.readText()` (`static/app.js`, Event-Listener auf
+`#paste-btn`). Diese Clipboard-API ist in allen gängigen Browsern nur in
+einem *secure context* verfügbar: HTTPS, oder `http://localhost` /
+`http://127.0.0.1`. hoerbox-feeder läuft standardmäßig ohne SSL auf einer
+LAN-Adresse (z. B. `http://192.168.1.20:8080`) – auf den meisten Geräten
+schlägt der Button dort also erwartungsgemäß fehl, das ist keine
+Fehlfunktion der App selbst, sondern eine **Einschränkung der Plattform
+ohne SSL**.
+
+**Eingebauter Fallback:** Schlägt `readText()` fehl, fängt `app.js` den
+Fehler ab und fokussiert/markiert stattdessen das URL-Feld, damit der
+Nutzer per Strg+V (bzw. langem Tippen → „Einfügen" auf Mobilgeräten) manuell
+einfügen kann. Das funktioniert unabhängig von HTTPS und Browser immer –
+der 📋-Button ist reiner Komfort, kein notwendiger Bestandteil des
+Workflows.
+
+**Browserspezifische Fixes, falls der 📋-Button trotzdem funktionieren
+soll:**
+
+- **Empfohlen, alle Browser:** einen Reverse Proxy (nginx, Caddy, Traefik)
+  mit Zertifikat (selbstsigniert oder Let's Encrypt über eine lokale
+  Domain) vor hoerbox-feeder schalten. Damit läuft die App über HTTPS und
+  der Button funktioniert überall ohne weitere Schritte.
+- **Chrome / Edge (nur für den eigenen Admin-Browser, kein Fix für jedes
+  Familiengerät):** `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+  öffnen, die Server-Adresse eintragen (z. B.
+  `http://192.168.1.20:8080`), Browser neu starten. Behandelt den Origin
+  als sicher und schaltet die Clipboard-API frei.
+- **Firefox / Safari:** kein vergleichbares Flag verfügbar – beide
+  Hersteller unterstützen (und planen) keine Umgehung der
+  Secure-Context-Pflicht für Clipboard-Zugriff. Hier bleibt nur der
+  Reverse-Proxy-Fix oder das manuelle Einfügen per Strg+V.
 
 ---
 

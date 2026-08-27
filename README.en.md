@@ -140,6 +140,17 @@ Enter these addresses once in the target device or a podcast app – see
 also the "addresses" page (`/einrichtung`) in the app itself, which shows
 the finished URLs (incl. QR codes) per button.
 
+### Known limitations
+
+- **No SSL out of the box:** hoerbox-feeder runs over plain HTTP on your
+  LAN by default, with no HTTPS certificate of its own. As a result, the
+  📋 paste button on the home page (browser clipboard access) may not work
+  in some browsers – this isn't a malfunction, it's a browser security
+  requirement (the Clipboard API is only available over HTTPS or
+  `localhost`). Manual paste via Ctrl+V always works regardless. Details,
+  cause, and browser-specific fixes: see
+  [DEVELOPER.en.md § 13.1](DEVELOPER.en.md#131-clipboard-paste-doesnt-work-missing-https).
+
 ## License
 
 [GPL-3.0](LICENSE) – Copyright © 2026 [kasati111](https://github.com/kasati111).

@@ -137,6 +137,17 @@ Diese Adressen einmalig im Zielgerät oder einer Podcast-App eintragen –
 siehe auch die „Adressen“-Seite (`/einrichtung`) in der App selbst, die die
 fertigen URLs (inkl. QR-Codes) pro Kanal anzeigt.
 
+### Bekannte Einschränkungen
+
+- **Kein SSL out of the box:** hoerbox-feeder läuft standardmäßig über
+  reines HTTP im LAN, ohne eigenes HTTPS-Zertifikat. Dadurch kann der
+  📋-Einfügen-Button auf der Startseite (Clipboard-Zugriff per Browser-API)
+  in manchen Browsern nicht funktionieren – das ist keine Fehlfunktion,
+  sondern eine Browser-Sicherheitsvorgabe (Clipboard-API nur über HTTPS
+  oder `localhost`). Manuelles Einfügen per Strg+V funktioniert davon
+  unabhängig immer. Details, Ursache und browserspezifische Fixes: siehe
+  [DEVELOPER.md § 13.1](DEVELOPER.md#131-clipboard-einfügen-funktioniert-nicht-fehlendes-https).
+
 ## Lizenz
 
 [GPL-3.0](LICENSE) – Copyright © 2026 [kasati111](https://github.com/kasati111).

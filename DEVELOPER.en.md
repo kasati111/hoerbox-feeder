@@ -524,6 +524,40 @@ is now explicitly documented in `requirements.txt`.
 | Scheduler won't start | APScheduler version | apscheduler≥3.10 |
 | "No space left" appears immediately when adding | `STORAGE_WARN_MB` too high; host filesystem has less free space than the threshold | Default is 100 MB. Check with `df -h /opt/hoerbox-feeder-data` on the host. Adjust the threshold via env var: `STORAGE_WARN_MB=50` in `docker-compose.yml`. |
 | Icons have a black or dark border | Browser/PWA cache showing an old version | Clear the browser cache (hard refresh: Ctrl+Shift+R). The PNG icons have a transparent background. |
+| Clipboard button (📋) does nothing or throws an error | No HTTPS (the Clipboard API requires a secure context) | See §13.1 |
+
+### 13.1 Clipboard paste doesn't work (missing HTTPS)
+
+The 📋 button next to the URL field on the home page uses
+`navigator.clipboard.readText()` (`static/app.js`, event listener on
+`#paste-btn`). Across all major browsers, this Clipboard API is only
+available in a *secure context*: HTTPS, or `http://localhost` /
+`http://127.0.0.1`. hoerbox-feeder runs over plain HTTP on a LAN address by
+default (e.g. `http://192.168.1.20:8080`) — on most devices the button will
+therefore fail as expected. This isn't a bug in the app itself, it's a
+**platform limitation from running without SSL**.
+
+**Built-in fallback:** when `readText()` fails, `app.js` catches the error
+and instead focuses/selects the URL field so the user can paste manually
+with Ctrl+V (or long-press → "Paste" on mobile). This always works
+regardless of HTTPS or browser — the 📋 button is a convenience, not a
+required part of the workflow.
+
+**Browser-specific fixes, if you want the 📋 button to work anyway:**
+
+- **Recommended, all browsers:** put a reverse proxy (nginx, Caddy,
+  Traefik) with a certificate (self-signed, or Let's Encrypt via a local
+  domain) in front of hoerbox-feeder. This serves the app over HTTPS and
+  the button works everywhere with no further steps.
+- **Chrome / Edge (only fixes it for your own admin browser, not a fix for
+  every family device):** open
+  `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, add the
+  server address (e.g. `http://192.168.1.20:8080`), restart the browser.
+  This treats the origin as secure and unlocks the Clipboard API.
+- **Firefox / Safari:** no equivalent flag exists — neither vendor
+  supports (or plans to support) bypassing the secure-context requirement
+  for clipboard access. The only options are the reverse-proxy fix above,
+  or manual paste via Ctrl+V.
 
 ---
 
