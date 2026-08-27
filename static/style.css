@@ -360,11 +360,20 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
 
 /* Setup: global settings card */
 .settings-card { text-align: left; border-top: none; margin-bottom: 20px; }
-.settings-row { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
+/* Options left, Speichern-button always pushed to the row's right edge via
+   margin-left:auto -- so it lines up at the same x-position across every
+   settings-card regardless of how long that row's label text is (radios
+   for "Bunte Knöpfe / Kanaltasten (nummeriert)" are much wider than
+   "Mono / Stereo", which used to leave the buttons staggered). */
+.settings-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.settings-row .cookie-upload-btn { margin-left: auto; }
 .settings-row input[type="number"] {
     width: 90px; padding: 10px; border: 2px solid #d5dbe2; border-radius: 8px;
     font-size: 1rem;
 }
+/* Standalone section heading between the settings cards and the address
+   grid (not inside a .setup-card, so it needs its own centering/spacing). */
+.setup-section-heading { text-align: center; margin: 36px 0 12px; }
 
 /* Belegung: disk usage bar */
 .disk-bar-wrap {
