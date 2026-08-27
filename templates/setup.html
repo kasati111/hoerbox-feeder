@@ -178,148 +178,79 @@
     });
 })();
 
-(function() {
-    const input = document.getElementById('max-items-input');
-    const saveBtn = document.getElementById('max-items-save');
-    const msg = document.getElementById('max-items-msg');
+// Shared by every settings-card save button below (§13.1-adjacent cleanup:
+// these used to be five hand-copied ~20-line IIFEs differing only in which
+// element/field they read and whether a page reload follows success).
+const SETTINGS_NO_CONNECTION_MSG = {{ t('setup.no_connection') | js }};
+
+function bindSettingsSave({ saveBtnId, msgId, field, getValue, reload }) {
+    const saveBtn = document.getElementById(saveBtnId);
+    const msg = document.getElementById(msgId);
     if (!saveBtn) return;
 
     saveBtn.addEventListener('click', async () => {
-        const value = parseInt(input.value, 10);
+        const value = getValue();
         saveBtn.disabled = true;
         msg.textContent = '';
         try {
             const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ max_items_per_list: value })
+                body: JSON.stringify({ [field]: value })
             }).then(r => r.json());
+            if (reload && res.ok) {
+                setTimeout(() => location.reload(), 400);
+                return;  // page is about to reload -- leave the button disabled
+            }
             msg.style.color = res.ok ? '#2e7d32' : '#c62828';
             msg.textContent = res.message;
         } catch (e) {
             msg.style.color = '#c62828';
-            msg.textContent = {{ t('setup.no_connection') | js }};
+            msg.textContent = SETTINGS_NO_CONNECTION_MSG;
         }
         saveBtn.disabled = false;
     });
-})();
+}
 
-(function() {
-    const input = document.getElementById('max-length-input');
-    const saveBtn = document.getElementById('max-length-save');
-    const msg = document.getElementById('max-length-msg');
-    if (!saveBtn) return;
+bindSettingsSave({
+    saveBtnId: 'max-items-save',
+    msgId: 'max-items-msg',
+    field: 'max_items_per_list',
+    getValue: () => parseInt(document.getElementById('max-items-input').value, 10),
+});
 
-    saveBtn.addEventListener('click', async () => {
-        const value = parseInt(input.value, 10);
-        saveBtn.disabled = true;
-        msg.textContent = '';
-        try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ max_playlist_length: value })
-            }).then(r => r.json());
-            msg.style.color = res.ok ? '#2e7d32' : '#c62828';
-            msg.textContent = res.message;
-        } catch (e) {
-            msg.style.color = '#c62828';
-            msg.textContent = {{ t('setup.no_connection') | js }};
-        }
-        saveBtn.disabled = false;
-    });
-})();
+bindSettingsSave({
+    saveBtnId: 'max-length-save',
+    msgId: 'max-length-msg',
+    field: 'max_playlist_length',
+    getValue: () => parseInt(document.getElementById('max-length-input').value, 10),
+});
 
-(function() {
-    const saveBtn = document.getElementById('audio-channels-save');
-    const msg = document.getElementById('audio-channels-msg');
-    if (!saveBtn) return;
-
-    saveBtn.addEventListener('click', async () => {
-        const checked = document.querySelector('input[name="audio-channels"]:checked');
-        const value = parseInt(checked.value, 10);
-        saveBtn.disabled = true;
-        msg.textContent = '';
-        try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ audio_channels: value })
-            }).then(r => r.json());
-            msg.style.color = res.ok ? '#2e7d32' : '#c62828';
-            msg.textContent = res.message;
-        } catch (e) {
-            msg.style.color = '#c62828';
-            msg.textContent = {{ t('setup.no_connection') | js }};
-        }
-        saveBtn.disabled = false;
-    });
-})();
+bindSettingsSave({
+    saveBtnId: 'audio-channels-save',
+    msgId: 'audio-channels-msg',
+    field: 'audio_channels',
+    getValue: () => parseInt(document.querySelector('input[name="audio-channels"]:checked').value, 10),
+});
 
 // Language and button-display changes affect every string/color on the
 // whole page (nav, all templates, channel names) -- a full reload is the
 // only way to reflect that everywhere at once, unlike the settings above
 // which only ever change a number used going forward.
-(function() {
-    const saveBtn = document.getElementById('language-save');
-    const msg = document.getElementById('language-msg');
-    if (!saveBtn) return;
+bindSettingsSave({
+    saveBtnId: 'language-save',
+    msgId: 'language-msg',
+    field: 'language',
+    getValue: () => document.querySelector('input[name="language"]:checked').value,
+    reload: true,
+});
 
-    saveBtn.addEventListener('click', async () => {
-        const checked = document.querySelector('input[name="language"]:checked');
-        const value = checked.value;
-        saveBtn.disabled = true;
-        msg.textContent = '';
-        try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ language: value })
-            }).then(r => r.json());
-            if (res.ok) {
-                setTimeout(() => location.reload(), 400);
-            } else {
-                msg.style.color = '#c62828';
-                msg.textContent = res.message;
-                saveBtn.disabled = false;
-            }
-        } catch (e) {
-            msg.style.color = '#c62828';
-            msg.textContent = {{ t('setup.no_connection') | js }};
-            saveBtn.disabled = false;
-        }
-    });
-})();
-
-(function() {
-    const saveBtn = document.getElementById('skin-save');
-    const msg = document.getElementById('skin-msg');
-    if (!saveBtn) return;
-
-    saveBtn.addEventListener('click', async () => {
-        const checked = document.querySelector('input[name="skin"]:checked');
-        const value = checked.value;
-        saveBtn.disabled = true;
-        msg.textContent = '';
-        try {
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ skin: value })
-            }).then(r => r.json());
-            if (res.ok) {
-                setTimeout(() => location.reload(), 400);
-            } else {
-                msg.style.color = '#c62828';
-                msg.textContent = res.message;
-                saveBtn.disabled = false;
-            }
-        } catch (e) {
-            msg.style.color = '#c62828';
-            msg.textContent = {{ t('setup.no_connection') | js }};
-            saveBtn.disabled = false;
-        }
-    });
-})();
+bindSettingsSave({
+    saveBtnId: 'skin-save',
+    msgId: 'skin-msg',
+    field: 'skin',
+    getValue: () => document.querySelector('input[name="skin"]:checked').value,
+    reload: true,
+});
 </script>
 {% endblock %}
