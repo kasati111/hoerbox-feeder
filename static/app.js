@@ -584,6 +584,11 @@ const hoerbox = (function () {
         if (delAllBtn) {
             delAllBtn.addEventListener('click', () => deleteAllFiles(delAllBtn.dataset.channel));
         }
+
+        const parkAllBtn = q('.park-all-btn');
+        if (parkAllBtn) {
+            parkAllBtn.addEventListener('click', () => parkAllToLibrary(parkAllBtn.dataset.channel));
+        }
     }
 
     function toggleBlock(btn) {
@@ -1037,6 +1042,17 @@ const hoerbox = (function () {
             }
         } catch (e) {
             toast('Konnte nicht gelöscht werden.');
+        }
+    }
+
+    async function parkAllToLibrary(channelId) {
+        if (!confirm('Alle Titel dieses Kanals in die Bibliothek verschieben?')) return;
+        try {
+            const res = await fetch(`/api/kanal/${channelId}/park`, { method: 'POST' }).then(r => r.json());
+            toast(res.message);
+            if (res.ok) setTimeout(() => location.reload(), 1000);
+        } catch (e) {
+            toast('Konnte nicht verschoben werden.');
         }
     }
 

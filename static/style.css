@@ -436,11 +436,19 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
     width: 30px; height: 30px; border-radius: 50%; font-size: .9rem; cursor: pointer;
 }
 .file-item .play-icon-btn { width: 30px; height: 30px; font-size: .9rem; }
+.channel-bulk-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; margin-bottom: 16px; }
+.channel-bulk-actions .delete-all-btn {
+    /* Belegung uses .delete-all-btn standalone (own margin below); inside
+       .channel-bulk-actions the wrapper's gap/margin already handles
+       spacing, so the button's own margin would just double it up. */
+    margin: 0;
+}
 .delete-all-btn {
     width: 100%; padding: 12px; font-size: 1rem; font-weight: 600;
     color: #fff; background: #f44336; border: none; border-radius: var(--radius);
     cursor: pointer; margin-top: 10px; margin-bottom: 16px;
 }
+.park-all-btn { width: 100%; }
 .empty-channel { color: var(--muted); font-style: italic; }
 
 .export-btn {

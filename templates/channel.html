@@ -18,9 +18,14 @@
     {% endif %}
 
     {% if blocks %}
-    <button type="button" class="delete-all-btn" data-channel="{{ channel.id }}">
-        Alle Titel löschen
-    </button>
+    <div class="channel-bulk-actions">
+        <button type="button" class="ghost-btn park-all-btn" data-channel="{{ channel.id }}">
+            Alle in Bibliothek verschieben
+        </button>
+        <button type="button" class="delete-all-btn" data-channel="{{ channel.id }}">
+            Alle Titel löschen
+        </button>
+    </div>
     {% endif %}
 
     {% if blocks %}

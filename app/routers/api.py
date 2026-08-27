@@ -650,6 +650,24 @@ def abo_toggle(n: int, payload: AboToggleRequest, db: Session = Depends(get_db))
             "count": len(subs)}
 
 
+@router.post("/kanal/{n}/park")
+def park_channel(n: int, request: Request, db: Session = Depends(get_db)):
+    """Move every active item of this channel to the Bibliothek at once --
+    the whole-channel counterpart to item/{id}/park and subscription/{id}/park,
+    already used internally by set_channel_active() when deactivating a
+    channel with content, exposed here as its own standalone action.
+
+    Also disables any subscriptions on this channel (same as park_block()
+    does for a single playlist) -- otherwise the next Abo-Sync would just
+    pull the parked episodes' successors straight back into the now-empty
+    channel, undoing the point of "move everything out"."""
+    if crud.get_channel(db, n) is None:
+        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+    count = library.park_channel(db, n, _base_url(request))
+    crud.set_subscription_enabled(db, n, False)
+    return {"ok": True, "message": f"{count} Folgen in die Bibliothek verschoben.", "count": count}
+
+
 class ChannelActiveRequest(BaseModel):
     active: bool
     move_to_library: bool = False
