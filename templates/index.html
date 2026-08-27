@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Etwas hinzufügen{% endblock %}
+
+{% block content %}
+<section class="add-box">
+    <h1>Etwas hinzufügen</h1>
+
+    <label for="url" class="field-label">Link einfügen</label>
+    <div class="url-wrap">
+        <input type="text" id="url" name="url" class="url-input"
+               placeholder="Link einfügen – z.B. von YouTube, Spotify oder einem Podcast"
+               autocomplete="off">
+        <button type="button" id="paste-btn" class="paste-btn" title="Aus Zwischenablage einfügen">
+            <!-- Clipboard-Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="4" rx="1"/>
+                <rect x="5" y="4" width="14" height="17" rx="2"/>
+                <line x1="9" y1="9" x2="15" y2="9"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="12" y2="17"/>
+            </svg>
+        </button>
+        <button type="button" id="clear-url-btn" class="paste-btn clear-btn" title="Eingabe löschen">✕</button>
+    </div>
+
+    <p class="field-label">Auf welchen Knopf?</p>
+    <div class="color-grid" id="color-grid">
+        {% for ch in channels %}
+        <button type="button" class="color-btn {{ 'inactive' if not ch.active }}" data-channel="{{ ch.id }}"
+                {% if not ch.active %}disabled{% endif %}
+                style="--btn-color: {{ ch.color_hex }};">
+            <span class="dot"></span>
+            <span class="name">{{ ch.name }}</span>
+            <span class="count-chip">{{ item_counts.get(ch.id, 0) }}</span>
+        </button>
+        {% endfor %}
+    </div>
+
+    <button type="button" id="add-btn" class="add-btn" disabled>Hinzufügen</button>
+
+    <div id="status" class="status" hidden>
+        <p id="status-text"></p>
+        <p id="status-detail" class="status-detail" hidden></p>
+        <div class="progress-wrap" id="progress-wrap" hidden>
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <button type="button" id="cancel-btn" class="cancel-btn" hidden>Abbrechen</button>
+        <button type="button" id="retry-btn" class="retry-btn" hidden>Nochmal versuchen</button>
+        <button type="button" id="delete-btn" hidden>Löschen</button>
+    </div>
+</section>
+
+{% if problem_count %}
+<div id="failed-notice" class="failed-notice">
+    <button type="button" id="failed-notice-close" class="failed-notice-close" title="Ausblenden">✕</button>
+    {% if problem_item %}
+    <a href="/kanal/{{ problem_item.channel_id }}#item-{{ problem_item.id }}" class="notice-link"><strong>„{{ problem_item.title }}“ braucht Aufmerksamkeit{% if problem_item.hint %}: {{ problem_item.hint }}{% endif %}.</strong></a>
+    {% else %}
+    <a href="/bearbeiten" class="notice-link"><strong>{{ problem_count }} Titel brauchen Aufmerksamkeit.</strong></a>
+    {% endif %}
+    <div class="item-error-actions">
+        <button type="button" id="retry-all-btn" class="retry-now-btn">{{ 'Nochmal versuchen' if problem_item else 'Alle nochmal versuchen' }}</button>
+        <button type="button" id="find-alt-all-btn" class="ghost-btn">{{ 'Andere Quelle suchen' if problem_item else 'Für alle andere Quelle suchen' }}</button>
+        <button type="button" id="delete-all-btn" class="del-btn-wide">{{ 'Löschen' if problem_item else 'Alle löschen' }}</button>
+    </div>
+    {% if not problem_item %}
+    <p class="hint">Einzeln bearbeiten unter <a href="/bearbeiten">Bearbeiten</a>.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if unreviewed_count %}
+{# Deliberately separate from #failed-notice and NOT styled red — these
+   items are typically playable ('done'), just auto-substituted by a search
+   and never looked at by a human. Showing them in red would read as
+   "broken" when the actual content might be perfectly fine. #}
+<div id="unreviewed-notice" class="unreviewed-notice">
+    <button type="button" id="unreviewed-notice-close" class="failed-notice-close" title="Ausblenden">✕</button>
+    {% if unreviewed_item %}
+    <a href="/kanal/{{ unreviewed_item.channel_id }}#item-{{ unreviewed_item.id }}" class="notice-link"><strong>„{{ unreviewed_item.title }}“ wurde automatisch über eine Ersatzsuche gefunden und sollte geprüft werden.</strong></a>
+    {% else %}
+    <a href="/bearbeiten" class="notice-link"><strong>{{ unreviewed_count }} Titel wurden automatisch über eine Ersatzsuche gefunden und sollten geprüft werden.</strong></a>
+    <p class="hint">Einzeln prüfen unter <a href="/bearbeiten">Bearbeiten</a>.</p>
+    {% endif %}
+</div>
+{% endif %}
+
+<div id="evict-dialog" class="modal-overlay" hidden>
+    <div class="modal-box">
+        <p id="evict-message"></p>
+        <button type="button" id="evict-library-btn" class="add-btn">In Bibliothek verschieben</button>
+        <button type="button" id="evict-delete-btn" class="cancel-btn">Endgültig löschen</button>
+        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">Abbrechen</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>hoerbox.initIndex();</script>
+{% endblock %}

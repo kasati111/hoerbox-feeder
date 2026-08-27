@@ -1,0 +1,17 @@
+# Pin starlette to 1.x (TemplateResponse(request, name, ctx) API).
+# fastapi 0.110+ requires starlette >= 0.46; 1.6.0 is confirmed compatible.
+fastapi>=0.110
+starlette>=1.0.0
+# anyio>=4.0 is required: soundcloud-v2/spotipyfree (spotdl pre-deps) can
+# downgrade anyio to 3.x, which causes ImportError on ExceptionGroup.
+anyio>=4.0
+uvicorn[standard]>=0.27
+sqlalchemy>=2.0
+yt-dlp[default]>=2026.1.1
+apscheduler>=3.10
+feedgen>=1.0
+qrcode>=7.4
+pillow>=10.0
+mutagen>=1.47
+python-multipart>=0.0.9
+jinja2>=3.1

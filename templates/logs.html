@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+
+{% block content %}
+<section class="logs-page">
+    <h1>Logs</h1>
+    <p class="hint">Die letzten {{ lines }} Zeilen. Für Fehlersuche gedacht — keine Nutzerdaten,
+       nur technische Meldungen.</p>
+
+    <a href="/logs" class="export-btn">↻ Aktualisieren</a>
+
+    <pre class="log-box">{{ content or "Noch keine Log-Einträge." }}</pre>
+
+    <a href="/einrichtung" class="back-link">← Zurück zu Setup</a>
+</section>
+{% endblock %}

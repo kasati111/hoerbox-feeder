@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+*.sqlite3
+.DS_Store
+.venv
+
+# Secrets / lokale Zertifikate -- nie versehentlich committen
+.env
+*.pem
+*.key
+cookies*.txt
+certs/

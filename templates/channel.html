@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ channel.name }}{% endblock %}
+
+{% block content %}
+<section class="channel-page" data-channel="{{ channel.id }}">
+    <div class="channel-head" style="--btn-color: {{ channel.color_hex }};">
+        <span class="dot big"></span>
+        <h1>{{ channel.name }}</h1>
+    </div>
+
+    <p class="playtime-total">Gesamte Spielzeit: <strong>{{ total_playtime }}</strong></p>
+
+    {% if has_abo %}
+    <label class="abo-switch">
+        <input type="checkbox" id="abo-toggle" {% if abo_enabled %}checked{% endif %}>
+        <span>Neue Folgen automatisch holen</span>
+    </label>
+    {% endif %}
+
+    {% if blocks %}
+    <button type="button" class="delete-all-btn" data-channel="{{ channel.id }}">
+        Alle Titel löschen
+    </button>
+    {% endif %}
+
+    {% if blocks %}
+    <ul class="item-list" id="item-list">
+        {% for b in blocks %}
+        {% if b.is_block %}
+        <li class="item block" data-sub-id="{{ b.subscription_id }}">
+            <div class="block-head">
+                <span class="outer-handle" title="Verschieben">≡</span>
+                <button type="button" class="block-toggle" aria-expanded="true">▾</button>
+                <span class="item-title">{{ b.title }}</span>
+                <span class="item-time">{{ b.entries|length }} Folgen</span>
+            </div>
+            <div class="block-actions">
+                <button type="button" class="ghost-btn block-to-library" data-sub-id="{{ b.subscription_id }}">→ Bibliothek</button>
+                <select class="channel-select block-channel-select" data-sub-id="{{ b.subscription_id }}">
+                    <option value="">→ anderer Kanal…</option>
+                    {% for ch in all_channels if ch.id != channel.id and ch.active %}
+                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="ghost-btn move-btn block-move-btn" data-sub-id="{{ b.subscription_id }}">Verschieben</button>
+                <button type="button" class="block-delete-btn" data-sub-id="{{ b.subscription_id }}">Löschen</button>
+            </div>
+            <ul class="sub-item-list" data-sub-id="{{ b.subscription_id }}">
+                {% for item in b.entries %}
+                <li class="item sub-item" id="item-{{ item.id }}" data-id="{{ item.id }}">
+                    {% include "_item_row.html" %}
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% else %}
+        {% set item = b.entries[0] %}
+        <li class="item single" id="item-{{ item.id }}" data-id="{{ item.id }}">
+            {% include "_item_row.html" %}
+            <div class="single-actions">
+                <button type="button" class="ghost-btn item-to-library" data-id="{{ item.id }}">→ Bibliothek</button>
+                <select class="channel-select item-channel-select" data-id="{{ item.id }}">
+                    <option value="">→ anderer Kanal…</option>
+                    {% for ch in all_channels if ch.id != channel.id and ch.active %}
+                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="ghost-btn move-btn item-move-btn" data-id="{{ item.id }}">Verschieben</button>
+            </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty">Hier ist noch nichts. Füge auf der Startseite etwas hinzu.</p>
+    {% endif %}
+
+    <a href="/" class="back-link">← Zurück</a>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="/static/app.js"></script>
+<script>hoerbox.initChannel({{ channel.id }});</script>
+{% endblock %}

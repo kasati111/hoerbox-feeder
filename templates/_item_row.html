@@ -1,0 +1,64 @@
+{# .item-row is a real flex container wrapping just the row content, with
+   .alt-search-panel below as a plain block sibling -- NOT another flex
+   child. A flex-basis:100% "wrap onto its own line" child inside a flex
+   container whose own width is derived from ITS ancestors' flex/percentage
+   sizing (as .item's was) creates a circular sizing dependency that grew
+   the whole chain (.item, .sub-item-list, .item.block, ...) past the
+   viewport the moment the panel opened. A plain block div is always simply
+   100% of its parent's content box, no flex math involved. #}
+<div class="item-row">
+<span class="{{ 'inner-handle' if item.is_sub else 'outer-handle' }}" title="Verschieben">≡</span>
+<div class="item-main">
+    <span class="item-title">{{ item.title }}</span>
+    {% if item.needs_alt_review %}
+    {# alt_source_url is set but nobody has confirmed/picked it via the
+       search panel below -- rendered regardless of status (including
+       'done'), since a blind substitute can be playable and simply wrong;
+       this is the only place that ever surfaces that without checking the
+       database directly. #}
+    <span class="warn-chip alt-review-chip" title="Wurde automatisch über eine Ersatzsuche gefunden, noch nicht geprüft">⟳ andere Quelle – bitte prüfen</span>
+    {% endif %}
+    {% if item.filename %}<span class="item-filename">{{ item.filename }}</span>{% endif %}
+</div>
+{% if item.status == 'done' %}
+<span class="item-time">{{ item.playtime }}</span>
+{% if item.filename %}
+<button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel_id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+{% endif %}
+{% if item.needs_alt_review %}
+<div class="item-alt-actions">
+    <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">Selbst suchen</button>
+    <button type="button" class="ghost-btn confirm-alt-btn" data-id="{{ item.id }}" title="Inhalt passt, Hinweis entfernen">✓ passt</button>
+</div>
+{% endif %}
+{% elif item.error_text %}
+<div class="item-error">
+    <span class="failed" title="{{ item.error_text }}">{{ item.error_text }}</span>
+    {% if item.is_backoff %}<span class="next-try">nächster Versuch automatisch um {{ item.next_attempt_str }} Uhr</span>{% endif %}
+    <div class="item-error-actions">
+        <button type="button" class="retry-now-btn" data-id="{{ item.id }}">Jetzt nochmal versuchen</button>
+        {% if item.is_backoff %}
+        {# Once attempts are exhausted (no longer backing off), the pipeline
+           has already automatically tried a different source itself (see
+           worker.handle_failure) -- offering this again here would just be
+           the same ytsearch1 query with the same likely result. #}
+        <button type="button" class="ghost-btn find-alt-btn" data-id="{{ item.id }}">Andere Quelle suchen</button>
+        {% endif %}
+        <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">Selbst suchen</button>
+    </div>
+</div>
+{% else %}
+<span class="item-time">wird geladen …</span>
+{% endif %}
+<button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+</div>
+
+{% if item.error_text or item.needs_alt_review %}
+<div class="alt-search-panel" data-id="{{ item.id }}" hidden>
+    <div class="alt-search-input-row">
+        <input type="text" class="alt-search-input" value="{{ item.search_hint }}">
+        <button type="button" class="alt-search-go-btn" data-id="{{ item.id }}">Suchen</button>
+    </div>
+    <div class="alt-search-results" data-id="{{ item.id }}"></div>
+</div>
+{% endif %}

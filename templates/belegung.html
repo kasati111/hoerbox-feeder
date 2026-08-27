@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Belegung{% endblock %}
+
+{% block content %}
+<section class="belegung-page">
+    <h1>Belegung der Knöpfe</h1>
+    <p class="hint">Übersicht über alle gespeicherten Dateien</p>
+
+    <div class="disk-bar-wrap">
+        <div class="disk-bar-fill{% if disk.free_mb < storage_warn_mb %} low{% endif %}"
+             style="width: {{ disk.percent }}%;"></div>
+    </div>
+    <p class="disk-bar-label">
+        {{ disk.used_mb }} MB von {{ (disk.total_mb / 1024) | round(1) }} GB belegt
+        ({{ disk.free_mb }} MB frei)
+    </p>
+
+    {% if total_files > 0 %}
+    <a href="/api/sd-export/zip" class="export-btn">⬇ Für SD-Karte herunterladen</a>
+    <p class="hint export-hint">Lädt alle {{ total_files }} Titel als ZIP-Datei herunter, sortiert
+        in Ordner 0–8. Entpacken und den Inhalt auf die Speicherkarte kopieren.</p>
+    {% endif %}
+
+    {% for ch in channels %}
+    <div class="belegung-card {{ 'inactive' if not ch.channel.active }}" style="--btn-color: {{ ch.channel.color_hex }};">
+        <div class="belegung-head">
+            <span class="dot"></span>
+            <h2>{{ ch.channel.name }}</h2>
+            {% if not ch.channel.active %}<span class="muted-chip">inaktiv</span>{% endif %}
+            <span class="count">({{ ch.file_count }} Dateien, {{ ch.total_size_mb }} MB)</span>
+        </div>
+        
+        {% if ch.files %}
+        <ul class="file-list">
+            {% for file in ch.files %}
+            <li class="file-item">
+                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ ch.channel.id }}/{{ file.filename | urlencode }}" title="Abspielen">▶</button>
+                <span class="file-name">{{ file.filename }}</span>
+                <span class="file-size">{{ file.size_mb }} MB</span>
+                <button type="button" class="del-file-btn"
+                        data-channel="{{ ch.channel.id }}"
+                        data-filename="{{ file.filename }}"
+                        title="Löschen">✕</button>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if ch.file_count > 0 %}
+        <button type="button" class="delete-all-btn" data-channel="{{ ch.channel.id }}">
+            Alle löschen ({{ ch.channel.name }})
+        </button>
+        {% endif %}
+        {% else %}
+        <p class="empty-channel">Keine Dateien</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <a href="/" class="back-link">← Zurück</a>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>hoerbox.initBelegung();</script>
+{% endblock %}

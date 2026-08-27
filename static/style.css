@@ -1,0 +1,514 @@
+:root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --text: #1c2733;
+    --muted: #667080;
+    --accent: #2196F3;
+    --radius: 14px;
+    --shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.topbar .logo { font-weight: 700; font-size: 1.15rem; color: var(--text); text-decoration: none; }
+.topbar nav a { margin-left: 16px; color: var(--accent); text-decoration: none; font-size: .95rem; }
+
+.content { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+.add-box { margin-bottom: 20px; }
+
+h1 { font-size: 1.5rem; margin: 0 0 18px; }
+
+/* Start page: dismissable "failed items" notice */
+.failed-notice {
+    position: relative; background: #fdecea; border: 1px solid #f5c6c0;
+    color: #7a1f14; border-radius: var(--radius); padding: 16px 40px 16px 16px;
+    margin-bottom: 20px; font-size: .92rem;
+}
+.failed-notice[hidden] { display: none; }
+/* Neutral — distinct from .failed-notice's red, since these items are
+   typically already playable and just unreviewed, not currently broken. */
+.unreviewed-notice {
+    position: relative; background: #fff3e0; border: 1px solid #ffd699;
+    color: #7a5200; border-radius: var(--radius); padding: 16px 40px 16px 16px;
+    margin-bottom: 20px; font-size: .92rem;
+}
+.unreviewed-notice[hidden] { display: none; }
+.unreviewed-notice .failed-notice-close { color: #7a5200; }
+.notice-link { color: inherit; text-decoration: none; display: block; }
+.notice-link:active { opacity: .7; }
+.failed-notice-close {
+    position: absolute; top: 10px; right: 10px; width: 32px; height: 32px;
+    border: none; background: transparent; color: #7a1f14; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer; border-radius: 50%;
+}
+
+/* Add box */
+.field-label { font-weight: 600; margin: 18px 0 8px; }
+.url-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+.url-input {
+    flex: 1;
+    padding: 16px;
+    font-size: 1.05rem;
+    border: 2px solid #d5dbe2;
+    border-radius: var(--radius);
+    background: var(--card);
+    min-width: 0; /* verhindert Überlauf in Flexbox */
+}
+.url-input:focus { outline: none; border-color: var(--accent); }
+.paste-btn {
+    flex-shrink: 0;
+    width: 56px;
+    background: var(--card);
+    border: 2px solid #d5dbe2;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    transition: background .15s, border-color .15s;
+}
+.paste-btn:active { background: #e8f0fe; border-color: var(--accent); }
+.paste-btn svg { width: 24px; height: 24px; }
+.clear-btn { font-size: 1.4rem; line-height: 1; color: #8a94a0; }
+
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+}
+.color-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 6px;
+    border: 3px solid transparent;
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-size: 1rem;
+    min-height: 88px;
+    transition: border-color .15s, transform .1s;
+}
+.color-btn { color: var(--text); text-decoration: none; }
+.color-btn:active { transform: scale(.97); }
+.color-btn.selected { border-color: var(--btn-color); }
+.color-btn .dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--btn-color);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.06);
+}
+.color-btn .name { font-weight: 600; }
+.color-btn:disabled, .color-btn.inactive { opacity: .45; cursor: not-allowed; filter: grayscale(.6); }
+.color-btn .count-chip {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    background: #eef1f4; color: #5a6672; font-size: .72rem; font-weight: 700;
+}
+
+.add-btn, .retry-btn, .cancel-btn, #delete-btn {
+    width: 100%;
+    padding: 18px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+.add-btn:disabled { background: #b7c2cd; cursor: not-allowed; }
+.retry-btn { background: #ff9800; margin-top: 14px; }
+.cancel-btn { background: #f44336; margin-top: 14px; }
+#delete-btn { background: #f44336; margin-top: 10px; }
+
+.status {
+    margin-top: 24px;
+    padding: 18px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+#status-text { font-size: 1.1rem; font-weight: 600; margin: 0 0 10px; }
+.status-detail { font-size: .9rem; color: var(--muted); margin: -6px 0 10px; }
+.status-detail[hidden] { display: none; }
+.progress-wrap {
+    width: 100%; height: 14px; background: #e3e8ee;
+    border-radius: 8px; overflow: hidden; margin: 10px 0;
+}
+.progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width .3s; }
+
+/* Channel page */
+.channel-head { display: flex; align-items: center; gap: 12px; }
+.channel-head .dot { width: 26px; height: 26px; border-radius: 50%; background: var(--btn-color); }
+.dot.big { width: 30px; height: 30px; }
+.playtime-total { color: var(--muted); }
+
+.abo-switch {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px; background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin: 14px 0; font-weight: 600;
+}
+.abo-switch input { width: 22px; height: 22px; }
+
+.item-list { list-style: none; padding: 0; margin: 16px 0; }
+/* Plain block, not flex — the actual row layout lives in .item-row below.
+   A flex-item child asking for flex-basis:100% (.alt-search-panel) inside a
+   container whose own width is itself flex/percentage-derived from further
+   up the tree creates a circular sizing dependency (each ancestor grows to
+   fit a child that wants to be 100% of it) that pushed the whole page into
+   horizontal scroll the moment the search panel opened. A plain block div
+   has no such ambiguity: it's always exactly its parent's content width. */
+.item {
+    padding: 14px; background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 10px;
+    scroll-margin-top: 70px; /* keep the sticky .topbar from covering a deep-linked item */
+}
+.item:target { outline: 2px solid var(--accent); }
+.item-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.item .outer-handle, .item .inner-handle { cursor: grab; font-size: 1.4rem; color: var(--muted); touch-action: none; }
+.item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.item-title { font-weight: 600; word-break: break-word; }
+.item-filename { font-size: .75rem; color: var(--muted); word-break: break-all; }
+.item-time { color: var(--muted); font-size: .9rem; white-space: nowrap; }
+.failed {
+    color: #f44336; font-size: .85rem;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden; word-break: break-word; max-width: 100%;
+}
+.del-btn {
+    border: none; background: #f4f6f8; color: #f44336;
+    width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer;
+}
+.del-btn-wide {
+    border: none; background: #f4f6f8; color: #f44336;
+    padding: 10px 16px; border-radius: 8px; font-size: .95rem; font-weight: 700;
+    cursor: pointer; min-height: 44px;
+}
+.play-icon-btn {
+    border: none; background: #f4f6f8; color: var(--accent);
+    width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer;
+    flex-shrink: 0;
+}
+.empty { color: var(--muted); text-align: center; margin: 40px 0; }
+.back-link { display: inline-block; margin-top: 10px; color: var(--accent); }
+
+/* Error / backoff state */
+/* flex: 1 1 0 (not the default 0 1 auto) is load-bearing: with an auto flex-
+   basis, a long unbreakable error string (e.g. a bare URL in a yt-dlp error)
+   makes this item's hypothetical size the whole unbroken line, which can
+   dwarf the row and starve .item-main (flex: 1 1 0%) down to 0 width — the
+   flex-grow on .item-main only ever applies when there's leftover space, not
+   when the row is already over capacity, so it never gets a chance to claim
+   any width back. Giving this item basis 0 too means available space is
+   split by ratio up front, and any long content wraps/clamps inside its own
+   share instead of first computing an oversized "natural" width. */
+.item-error { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: 1 1 0; min-width: 0; }
+.next-try { font-size: .78rem; color: var(--muted); }
+/* The 4px column gap above (shared with .next-try) reads as cramped
+   specifically between the red error text and the "...suchen" button row
+   right below it -- extra breathing room scoped to just that gap. */
+.item-error .item-error-actions { margin-top: 8px; }
+.item-error-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+/* Same row (a direct flex child of .item, not wrapped in .item-error like
+   .item-error-actions is), so it needs the same flex:1 1 0 fix directly:
+   flex-basis:auto here would let its own moderate "natural" width (two
+   buttons) starve .item-main's flex:1 1 0% down to a sliver again — see
+   .item-error's comment for the full explanation of why this happens. */
+.item-alt-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; flex: 1 1 0; min-width: 0; }
+.failed-notice .item-error-actions { justify-content: flex-start; margin-top: 4px; }
+.retry-now-btn {
+    background: #ff9800; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 16px; font-size: .95rem; font-weight: 700; cursor: pointer;
+    min-height: 44px;
+}
+
+/* "Selbst suchen" panel — a manual, human-verified alternative to the blind
+   ytsearch1: guess. flex-basis:100% (with .item's flex-wrap: wrap) makes it
+   drop onto its own full-width row below the rest of the item row instead
+   of squeezing into the flex row alongside title/actions. */
+.alt-review-chip { background: #fff3e0; color: #b45f06; }
+.alt-search-panel { margin-top: 10px; }
+.alt-search-panel[hidden] { display: none; }
+.alt-search-input-row { display: flex; gap: 8px; margin-top: 10px; }
+.alt-search-input {
+    flex: 1; min-width: 0; border: 1px solid #d5dbe2; border-radius: 8px;
+    padding: 10px 12px; font-size: 1rem;
+}
+.alt-search-go-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 10px 16px; font-size: .95rem; font-weight: 700; cursor: pointer;
+    min-height: 44px;
+}
+.alt-search-results { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.alt-candidate {
+    display: flex; align-items: center; gap: 10px; padding: 8px;
+    background: var(--bg); border-radius: 8px;
+}
+.alt-candidate img {
+    width: 64px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0;
+}
+.alt-candidate-info { flex: 1; min-width: 0; }
+.alt-candidate-title { font-weight: 600; word-break: break-word; }
+.alt-candidate-meta { font-size: .8rem; color: var(--muted); }
+.alt-candidate-pick-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 14px; font-size: .9rem; font-weight: 700; cursor: pointer;
+    min-height: 44px; flex-shrink: 0;
+}
+.alt-search-empty { color: var(--muted); font-size: .9rem; }
+
+/* Playlist blocks */
+.item.block { display: flex; flex-direction: column; align-items: stretch; }
+.block-head { display: flex; align-items: center; gap: 10px; }
+.block-toggle {
+    border: none; background: transparent; color: var(--muted);
+    font-size: 1.4rem; cursor: pointer; padding: 8px 12px;
+    min-width: 44px; min-height: 44px;
+}
+.block-actions, .single-actions {
+    display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;
+}
+.sub-item-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.sub-item-list .item.sub-item {
+    background: var(--bg); box-shadow: none; margin-bottom: 8px; margin-left: 20px;
+}
+/* Bigger touch targets for playlist controls (Bibliothek + block-actions) —
+   these were sized like desktop secondary buttons (6-8px padding, .85rem)
+   and were hard to hit reliably on a tablet. */
+.ghost-btn {
+    background: transparent; border: 1px solid #d5dbe2; color: var(--muted);
+    border-radius: 8px; padding: 10px 16px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; min-height: 44px;
+}
+.channel-select {
+    border: 1px solid #d5dbe2; border-radius: 8px; padding: 10px 12px;
+    font-size: 1rem; background: var(--card); color: var(--text); min-height: 44px;
+}
+.block-delete-btn {
+    background: transparent; border: 1px solid #f44336; color: #f44336;
+    border-radius: 8px; padding: 10px 16px; font-size: 1rem; font-weight: 600;
+    cursor: pointer; min-height: 44px;
+}
+
+/* Eviction-choice modal */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; z-index: 100;
+}
+.modal-overlay[hidden] { display: none; } /* [hidden] alone loses to the class's own
+    "display: flex" at equal specificity — this is what actually hides it. */
+.modal-box {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px; max-width: 420px; width: 100%; text-align: center;
+}
+.modal-box p { margin: 0 0 18px; font-weight: 600; }
+.modal-box .add-btn, .modal-box .cancel-btn { margin-top: 0; margin-bottom: 10px; }
+.modal-cancel {
+    width: 100%; padding: 14px; background: transparent; border: none;
+    color: var(--muted); font-weight: 600; cursor: pointer;
+}
+
+/* Logs page */
+.log-box {
+    background: #1c2733; color: #d7e0ea; border-radius: var(--radius);
+    padding: 16px; margin-top: 16px; font-family: "SF Mono", Consolas, monospace;
+    font-size: .78rem; line-height: 1.5; overflow-x: auto; white-space: pre-wrap;
+    word-break: break-word; max-height: 70vh; overflow-y: auto;
+}
+
+/* Bearbeiten: warning chip — sits in the tile's normal flex flow (not an
+   absolutely-positioned corner badge, which looked like a stray notification
+   dot overlapping the card edge instead of belonging to the tile). Soft red
+   matches .failed-notice's palette instead of a harsh solid red circle. */
+.warn-chip {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    background: #fdecea; color: #c0392b; font-size: .78rem; font-weight: 700;
+}
+.muted-chip {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    background: #eef1f4; color: #5a6672; font-size: .78rem; font-weight: 700;
+}
+
+/* Setup: global settings card */
+.settings-card { text-align: left; border-top: none; margin-bottom: 20px; }
+.settings-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.settings-row input[type="number"] {
+    width: 90px; padding: 10px; border: 2px solid #d5dbe2; border-radius: 8px;
+    font-size: 1rem;
+}
+
+/* Belegung: disk usage bar */
+.disk-bar-wrap {
+    background: #e3e8ee; border-radius: 999px; height: 14px;
+    overflow: hidden; margin: 12px 0 6px;
+}
+.disk-bar-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+.disk-bar-fill.low { background: #f44336; }
+.disk-bar-label { font-size: .85rem; color: var(--muted); margin: 0 0 20px; }
+
+/* Bibliothek page */
+.library-card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-bottom: 16px;
+}
+.library-card-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.library-card-head .count { color: var(--muted); font-size: .85rem; margin-left: auto; }
+.library-card-head .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--btn-color); }
+.library-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.library-sub-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.library-item {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 8px;
+    border-left: 4px solid var(--btn-color);
+}
+.library-item .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--btn-color); }
+
+/* Setup page */
+.hint { color: var(--muted); margin-bottom: 16px; }
+.setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 16px; }
+.setup-card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 14px; text-align: center; border-top: 5px solid var(--btn-color);
+}
+.setup-head { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+.setup-head .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--btn-color); }
+.qr { width: 100%; max-width: 150px; height: auto; image-rendering: pixelated; }
+.address { display: block; font-size: .7rem; color: var(--muted); word-break: break-all; margin-top: 6px; }
+.setup-card.channel-toggle { cursor: pointer; position: relative; border: none; width: 100%; font: inherit; }
+.setup-card.inactive { opacity: .55; }
+.setup-card.inactive::after {
+    content: "✕"; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); font-size: 2.8rem; font-weight: 700;
+    color: #d32f2f;
+}
+.setup-inactive-hint { color: #d32f2f; font-size: 1.1rem; font-weight: 700; margin: 4px 0 0; }
+
+/* Belegung page */
+.belegung-card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-bottom: 16px; border-left: 5px solid var(--btn-color);
+}
+.belegung-card.inactive { opacity: .55; }
+.belegung-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.belegung-head .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--btn-color); }
+.belegung-head h2 { font-size: 1.2rem; margin: 0; flex: 1; }
+.belegung-head .count { color: var(--muted); font-size: .9rem; }
+.file-list { list-style: none; padding: 0; margin: 12px 0; }
+.file-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 8px;
+}
+.file-name { flex: 1; font-weight: 500; word-break: break-word; font-size: .9rem; }
+.file-size { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.del-file-btn {
+    border: none; background: #f4f6f8; color: #f44336;
+    width: 30px; height: 30px; border-radius: 50%; font-size: .9rem; cursor: pointer;
+}
+.file-item .play-icon-btn { width: 30px; height: 30px; font-size: .9rem; }
+.delete-all-btn {
+    width: 100%; padding: 12px; font-size: 1rem; font-weight: 600;
+    color: #fff; background: #f44336; border: none; border-radius: var(--radius);
+    cursor: pointer; margin-top: 10px; margin-bottom: 16px;
+}
+.empty-channel { color: var(--muted); font-style: italic; }
+
+.export-btn {
+    display: block; width: 100%; padding: 16px; margin-bottom: 6px;
+    font-size: 1.05rem; font-weight: 700; text-align: center; text-decoration: none;
+    color: #fff; background: var(--accent); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.export-hint { margin-top: 0; margin-bottom: 22px; }
+
+/* Cookie-Status auf der Einrichtungsseite */
+.cookie-status {
+    padding: 14px 16px; border-radius: var(--radius);
+    margin-bottom: 20px; font-size: .95rem; line-height: 1.5;
+}
+.cookie-status.ok { background: #e8f5e9; color: #2e7d32; }
+.cookie-status.warn { background: #fff8e1; color: #5d4037; border: 1px solid #ffe082; }
+.setup-callout {
+    padding: 14px 16px; border-radius: var(--radius); margin-bottom: 20px;
+    font-size: .95rem; line-height: 1.5;
+    background: #fff8e1; color: #5d4037; border: 1px solid #ffe082;
+}
+.cookie-status code { background: rgba(0,0,0,.07); padding: 1px 5px; border-radius: 4px; }
+.cookie-update-btn {
+    display: inline-block; margin-left: 12px; padding: 4px 12px;
+    font-size: .85rem; font-weight: 600; color: #2e7d32;
+    background: #c8e6c9; border: none; border-radius: 20px; cursor: pointer;
+}
+
+/* Cookie-Upload-Schritte */
+.cookie-steps {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 18px 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 18px;
+}
+.cookie-step {
+    display: flex; align-items: flex-start; gap: 14px; line-height: 1.55;
+}
+.step-num {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-weight: 700; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.cookie-file-label {
+    display: inline-block; padding: 8px 14px; margin-top: 8px;
+    background: #e8f0fe; color: var(--accent); border-radius: 8px;
+    cursor: pointer; font-weight: 600; font-size: .9rem;
+}
+.cookie-file-label input[type="file"] { display: none; }
+.cookie-upload-btn {
+    display: inline-block; margin-left: 8px; padding: 8px 18px;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; font-size: .9rem; font-weight: 700;
+    cursor: pointer; vertical-align: middle;
+}
+.cookie-upload-btn:disabled { background: #b7c2cd; cursor: not-allowed; }
+#cookie-upload-msg { display: inline-block; margin-left: 10px; font-size: .9rem; vertical-align: middle; }
+
+/* Footer */
+.footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 40px; text-align: center; }
+.footer .legal { font-size: .8rem; color: var(--muted); }
+
+/* Toast */
+.toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: #1c2733; color: #fff; padding: 12px 18px; border-radius: 10px;
+    box-shadow: var(--shadow); z-index: 50; font-size: .95rem;
+}
+
+@media (max-width: 380px) {
+    .color-grid { grid-template-columns: repeat(2, 1fr); }
+}

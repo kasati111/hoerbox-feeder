@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Bibliothek{% endblock %}
+
+{% block content %}
+<section class="library-page">
+    <h1>Bibliothek</h1>
+    <p class="hint">Geparkte Titel und Playlists – liegen bereit, ohne einen Kanalplatz zu belegen.</p>
+
+    {% if groups %}
+    {% for g in groups %}
+    <div class="library-card">
+        {% if g.is_block %}
+        <div class="library-card-head">
+            {# Collapsed by default -- unlike the channel view's playlist
+               blocks (deliberately left expanded there), the Bibliothek is
+               a parking lot for potentially many playlists at once, where
+               the per-episode list is rarely what someone wants to see
+               first; the block-level actions (move/delete the whole thing)
+               are the common case here. #}
+            <button type="button" class="block-toggle lib-block-toggle" aria-expanded="false">▸</button>
+            <strong>{{ g.title }}</strong>
+            <span class="count">{{ g.entries|length }} Folgen</span>
+        </div>
+        <div class="library-actions">
+            <select class="channel-select lib-block-channel-select" data-sub-id="{{ g.subscription_id }}">
+                <option value="">Auf Kanal legen…</option>
+                {% for ch in all_channels if ch.active %}
+                <option value="{{ ch.id }}">{{ ch.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="ghost-btn move-btn lib-block-move-btn" data-sub-id="{{ g.subscription_id }}">Verschieben</button>
+            <button type="button" class="block-delete-btn" data-sub-id="{{ g.subscription_id }}">Löschen</button>
+        </div>
+        <ul class="library-sub-list" hidden>
+            {% for item in g.entries %}
+            <li class="library-item" data-id="{{ item.id }}" style="--btn-color: {{ item.channel.color_hex }};">
+                <span class="dot"></span>
+                <span class="item-title">{{ item.title }}</span>
+                <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
+                    <option value="">Auf Kanal legen…</option>
+                    {% for ch in all_channels if ch.active %}
+                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">Verschieben</button>
+                <button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        {% set item = g.entries[0] %}
+        <div class="library-card-head" style="--btn-color: {{ item.channel.color_hex }};">
+            <span class="dot"></span>
+            <strong>{{ item.title }}</strong>
+        </div>
+        <div class="library-actions" data-id="{{ item.id }}">
+            <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
+                <option value="">Auf Kanal legen…</option>
+                {% for ch in all_channels if ch.active %}
+                <option value="{{ ch.id }}">{{ ch.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">Verschieben</button>
+            <button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="empty">Die Bibliothek ist leer.</p>
+    {% endif %}
+
+    <a href="/" class="back-link">← Zurück</a>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>hoerbox.initBibliothek();</script>
+{% endblock %}

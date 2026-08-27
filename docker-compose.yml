@@ -1,0 +1,35 @@
+services:
+  hoerbox-feeder:
+    build:
+      context: .
+      # Kein Netzwerkzugriff auf Docker Hub nötig – lokales Image wird direkt
+      # verwendet, falls vorhanden. Verhindert DNS-Fehler beim Image-Pull.
+    pull_policy: if_not_present
+    container_name: hoerbox-feeder
+    ports:
+      # LAN only. Do NOT expose this port to the internet.
+      - "8080:8080"
+    volumes:
+      # Volume-Namen bewusst unverändert gelassen (statt hoerbox_*) -- das
+      # sind reine, nach außen unsichtbare Laufzeit-Bezeichner auf dem
+      # jeweiligen Server; ein Umbenennen würde Docker dazu bringen, beim
+      # nächsten Start leere neue Volumes anzulegen statt die bestehenden
+      # mit den echten Downloads/der Datenbank weiterzuverwenden.
+      - hoerbert_audio:/data/audio
+      - hoerbert_db:/data/db
+    environment:
+      - TZ=Europe/Berlin
+      - PORT=8080
+      # Standard (100 MB) aus app/config.py wird verwendet, siehe DEVELOPER.md
+      # §13 "Kein Platz mehr erscheint sofort". Bei Bedarf hier überschreiben,
+      # z. B. STORAGE_WARN_MB=250.
+      # FEED_BASE_URL: Basisadresse, die der Scheduler beim automatischen
+      # Abo-Sync in die (aktuell ungenutzte) Feed-Cache-Datei schreibt.
+      # Standard http://localhost:PORT passt für dieses Compose-Setup; bei
+      # anderer Umgebung (z. B. eigener Reverse-Proxy) hier überschreiben,
+      # z. B. FEED_BASE_URL=http://hoerbox.example.local:8080.
+    restart: unless-stopped
+
+volumes:
+  hoerbert_audio:
+  hoerbert_db:

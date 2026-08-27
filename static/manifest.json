@@ -1,0 +1,21 @@
+{
+  "name": "hoerbox-feeder",
+  "short_name": "hoerbox-feeder",
+  "description": "Musik und Podcasts für deinen Hörspieler vorbereiten",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c2733",
+  "theme_color": "#1c2733",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

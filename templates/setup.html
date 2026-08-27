@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+
+{% block content %}
+<section class="setup-page">
+    <h1>Setup</h1>
+    <p class="hint">Diese Adressen einmalig im Gerät eintragen. Danach musst du hier
+       nichts mehr tun – neue Inhalte erscheinen von selbst.</p>
+
+    {% if cookies_ok %}
+    <div class="cookie-status ok">
+        ✓ YouTube-Zugang aktiv
+        <button type="button" class="cookie-update-btn" onclick="document.getElementById('cookie-upload-box').hidden=false;this.hidden=true;">
+            Erneuern
+        </button>
+    </div>
+    {% else %}
+    <div class="cookie-status warn">
+        ℹ YouTube-Zugang ist nicht eingerichtet – normalerweise nicht nötig.
+        Nur falls YouTube-Downloads blockiert werden, hier einrichten:
+        <button type="button" class="cookie-update-btn" onclick="document.getElementById('cookie-upload-box').hidden=false;this.hidden=true;">
+            Einrichten
+        </button>
+    </div>
+    {% endif %}
+
+    <div id="cookie-upload-box" hidden>
+        <div class="cookie-steps">
+            <div class="cookie-step">
+                <span class="step-num">1</span>
+                <div>
+                    Browser-Erweiterung installieren:<br>
+                    <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+                       target="_blank" rel="noopener">Chrome / Edge →</a>
+                    &nbsp;
+                    <a href="https://addons.mozilla.org/de/firefox/addon/cookies-txt/"
+                       target="_blank" rel="noopener">Firefox →</a><br>
+                    <small>Dann auf youtube.com gehen, Erweiterung anklicken, „Export" drücken.</small>
+                </div>
+            </div>
+            <div class="cookie-step">
+                <span class="step-num">2</span>
+                <div>
+                    Exportierte Datei hier hochladen:<br>
+                    <label class="cookie-file-label">
+                        <input type="file" id="cookie-file" accept=".txt,text/plain">
+                        Datei auswählen …
+                    </label>
+                    <button type="button" id="cookie-upload-btn" class="cookie-upload-btn" disabled>
+                        Hochladen
+                    </button>
+                    <span id="cookie-upload-msg"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="setup-card settings-card">
+        <h2>Maximale Downloads</h2>
+        <p class="hint">Wie viele Folgen soll eine Playlist oder ein Podcast höchstens
+           auf einmal laden? Der Rest kommt automatisch nach und nach nach.</p>
+        <div class="settings-row">
+            <input type="number" id="max-items-input" min="1" max="500" value="{{ max_items_per_list }}">
+            <button type="button" id="max-items-save" class="cookie-upload-btn">Speichern</button>
+        </div>
+        <span id="max-items-msg"></span>
+    </div>
+
+    <div class="setup-card settings-card">
+        <h2>Maximale Playlistlänge</h2>
+        <p class="hint">Wie viele Folgen sollen pro Kanal höchstens aufgehoben werden?
+           Kommen neue dazu, werden die ältesten darüber hinaus automatisch gelöscht.</p>
+        <div class="settings-row">
+            <input type="number" id="max-length-input" min="1" max="500" value="{{ max_playlist_length }}">
+            <button type="button" id="max-length-save" class="cookie-upload-btn">Speichern</button>
+        </div>
+        <span id="max-length-msg"></span>
+    </div>
+
+    <p class="hint">Diese Adressen einmalig im Hörspieler als Podcast hinzufügen – für jeden Knopf eine.</p>
+    <div class="setup-callout">
+        💡 Läuft auf einem Knopf externer Content (z. B. von einer SD-Karte)? Auf den
+        QR-Code klicken deaktiviert ihn – der Feeder lässt ihn dann in Ruhe, damit
+        nichts durcheinanderkommt.
+    </div>
+    <div class="setup-grid">
+        {% for entry in addresses %}
+        <button type="button" class="setup-card channel-toggle {{ 'inactive' if not entry.channel.active }}"
+                data-channel="{{ entry.channel.id }}" data-active="{{ 1 if entry.channel.active else 0 }}"
+                style="--btn-color: {{ entry.channel.color_hex }};">
+            <div class="setup-head">
+                <span class="dot"></span>
+                <strong>{{ entry.channel.name }}</strong>
+            </div>
+            {% if entry.channel.active %}
+            <img class="qr" src="{{ entry.qr }}" alt="QR-Code {{ entry.channel.name }}">
+            <code class="address">{{ entry.address }}</code>
+            {% else %}
+            <p class="setup-inactive-hint">deaktiviert</p>
+            {% endif %}
+        </button>
+        {% endfor %}
+    </div>
+</section>
+
+<div id="evict-dialog" class="modal-overlay" hidden>
+    <div class="modal-box">
+        <p id="evict-message"></p>
+        <button type="button" id="evict-library-btn" class="add-btn">In Bibliothek verschieben</button>
+        <button type="button" id="evict-delete-btn" class="cancel-btn">Endgültig löschen</button>
+        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">Abbrechen</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>hoerbox.initSetup();</script>
+<script>
+(function() {
+    const fileInput = document.getElementById('cookie-file');
+    const uploadBtn = document.getElementById('cookie-upload-btn');
+    const msg = document.getElementById('cookie-upload-msg');
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', () => {
+        uploadBtn.disabled = !fileInput.files.length;
+        msg.textContent = fileInput.files.length ? fileInput.files[0].name : '';
+    });
+
+    uploadBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        uploadBtn.disabled = true;
+        msg.textContent = 'Wird hochgeladen …';
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/cookies-upload', { method: 'POST', body: fd }).then(r => r.json());
+            if (res.ok) {
+                msg.style.color = '#2e7d32';
+                msg.textContent = res.message;
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                msg.style.color = '#c62828';
+                msg.textContent = res.detail || 'Fehler beim Hochladen.';
+                uploadBtn.disabled = false;
+            }
+        } catch(e) {
+            msg.style.color = '#c62828';
+            msg.textContent = 'Keine Verbindung.';
+            uploadBtn.disabled = false;
+        }
+    });
+})();
+
+(function() {
+    const input = document.getElementById('max-items-input');
+    const saveBtn = document.getElementById('max-items-save');
+    const msg = document.getElementById('max-items-msg');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async () => {
+        const value = parseInt(input.value, 10);
+        saveBtn.disabled = true;
+        msg.textContent = '';
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ max_items_per_list: value })
+            }).then(r => r.json());
+            msg.style.color = res.ok ? '#2e7d32' : '#c62828';
+            msg.textContent = res.message;
+        } catch (e) {
+            msg.style.color = '#c62828';
+            msg.textContent = 'Keine Verbindung.';
+        }
+        saveBtn.disabled = false;
+    });
+})();
+
+(function() {
+    const input = document.getElementById('max-length-input');
+    const saveBtn = document.getElementById('max-length-save');
+    const msg = document.getElementById('max-length-msg');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async () => {
+        const value = parseInt(input.value, 10);
+        saveBtn.disabled = true;
+        msg.textContent = '';
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ max_playlist_length: value })
+            }).then(r => r.json());
+            msg.style.color = res.ok ? '#2e7d32' : '#c62828';
+            msg.textContent = res.message;
+        } catch (e) {
+            msg.style.color = '#c62828';
+            msg.textContent = 'Keine Verbindung.';
+        }
+        saveBtn.disabled = false;
+    });
+})();
+</script>
+{% endblock %}
