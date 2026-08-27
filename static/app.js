@@ -5,9 +5,23 @@ const hoerbox = (function () {
 
     function q(sel) { return document.querySelector(sel); }
     function qa(sel) { return Array.from(document.querySelectorAll(sel)); }
+    // Translated strings embedded server-side (see templates/base.html) --
+    // falls back to the key itself if a key is somehow missing, same as
+    // the Python-side t() helper, so a typo shows up as visible junk text
+    // instead of a silent blank. Params use the same {name} placeholder
+    // syntax as i18n.t() on the Python side.
+    function i18n(key, params) {
+        let text = (window.HOERBOX_I18N && window.HOERBOX_I18N[key]) || key;
+        if (params) {
+            for (const name in params) {
+                text = text.split('{' + name + '}').join(params[name]);
+            }
+        }
+        return text;
+    }
 
-    // Channel name doubles as the "Farbe" (channel colors are literally
-    // named after their color: Rot, Dunkelblau, ...) shown alongside a
+    // The channel button's display label (a color name, or "Taste N" in the
+    // numbered skin — see channel_label() server-side) shown alongside a
     // title so a status/error line makes sense without page context — e.g.
     // in a phone notification or after scrolling away from the color grid.
     function selectedChannelName() {
@@ -114,7 +128,7 @@ const hoerbox = (function () {
         const statusDetailEl = q('#status-detail');
         if (statusDetailEl) statusDetailEl.hidden = true;
         progWrap.hidden = true;
-        statusText.textContent = 'Wird vorbereitet …';
+        statusText.textContent = i18n('js.status.preparing');
         q('#add-btn').disabled = true;
 
         let res;
@@ -129,12 +143,12 @@ const hoerbox = (function () {
                 })
             }).then(r => r.json());
         } catch (e) {
-            showError('Keine Verbindung.', retryBtn, statusText);
+            showError(i18n('js.status.no_connection'), retryBtn, statusText);
             return;
         }
 
         if (!res.ok) {
-            showError(res.message || 'Ging nicht.', retryBtn, statusText);
+            showError(res.message || i18n('js.status.failed'), retryBtn, statusText);
             return;
         }
 
@@ -162,11 +176,11 @@ const hoerbox = (function () {
             // 26 Folgen werden jetzt geladen." for a series add) —
             // otherwise the first poll tick 1.5s later would overwrite it
             // before anyone reads it.
-            statusText.textContent = res.message || 'Wird vorbereitet …';
+            statusText.textContent = res.message || i18n('js.status.preparing');
             saveJobsToStorage(res.job_ids, 'running', res.series_title);
             pollJobs(res.job_ids, statusText, progWrap, retryBtn, res.series_title);
         } else {
-            statusText.textContent = res.message || 'Ab morgen früh auf dem Hörspieler 🎵';
+            statusText.textContent = res.message || i18n('js.status.on_player_tomorrow');
             resetAddBtn();
         }
     }
@@ -209,8 +223,8 @@ const hoerbox = (function () {
 
         function renderBatchProgress() {
             const c = counts();
-            const label = seriesTitle ? titleWithChannel(seriesTitle) : 'Serie';
-            let msg = label + ': ' + c.done + ' von ' + total + ' Folgen fertig';
+            const label = seriesTitle ? titleWithChannel(seriesTitle) : i18n('js.status.series_label_fallback');
+            let msg = i18n('js.status.batch_progress', { label: label, done: c.done, total: total });
             // A job stuck in backoff (erroring, waiting to retry within its
             // ~2h/3-attempt window — see worker.handle_failure) used to be
             // indistinguishable from one still normally downloading, both
@@ -218,15 +232,15 @@ const hoerbox = (function () {
             // it here is the actual fix for a batch that silently looked
             // frozen while most of its episodes were quietly failing.
             if (c.backoff > 0) {
-                msg += ', ' + c.backoff + ' warten auf erneuten Versuch';
+                msg += ', ' + i18n('js.status.waiting_retry', { n: c.backoff });
             }
             if (c.failed > 0) {
-                msg += ', ' + c.failed + ' endgültig nicht verfügbar';
+                msg += ', ' + i18n('js.status.finally_unavailable', { n: c.failed });
             }
             statusText.textContent = msg;
             if (statusDetailEl) {
                 if (currentDetail && currentDetail.text) {
-                    statusDetailEl.textContent = 'Aktuell: '
+                    statusDetailEl.textContent = i18n('js.status.current_label') + ' '
                         + (currentDetail.title ? '„' + currentDetail.title + '“ – ' : '')
                         + currentDetail.text;
                     statusDetailEl.hidden = false;
@@ -245,18 +259,19 @@ const hoerbox = (function () {
             resetAddBtn();
             saveJobsToStorage(jobIds, 'done');
             if (c.cancelled >= total) {
-                statusText.textContent = 'Wurde abgebrochen';
+                statusText.textContent = i18n('js.status.cancelled');
                 return;
             }
             q('#progress-bar').style.width = '100%';
             if (c.failed > 0) {
-                const label = seriesTitle ? titleWithChannel(seriesTitle) : 'Serie';
-                statusText.textContent = label + ': ' + c.done + ' von ' + total
-                    + ' geladen, ' + c.failed
-                    + (c.failed === 1 ? ' Folge nicht verfügbar' : ' Folgen nicht verfügbar')
-                    + ' – Details unter „Bearbeiten“.';
+                const label = seriesTitle ? titleWithChannel(seriesTitle) : i18n('js.status.series_label_fallback');
+                const failedText = c.failed === 1
+                    ? i18n('js.status.failed_episode_one', { n: c.failed })
+                    : i18n('js.status.failed_episode_many', { n: c.failed });
+                statusText.textContent = i18n('js.status.batch_done_with_failures',
+                    { label: label, done: c.done, total: total, failedText: failedText });
             } else {
-                statusText.textContent = 'Ab morgen früh auf dem Hörspieler 🎵';
+                statusText.textContent = i18n('js.status.on_player_tomorrow');
             }
         }
 
@@ -286,17 +301,17 @@ const hoerbox = (function () {
                     if (s.status === 'done') {
                         clearInterval(timer);
                         q('#progress-bar').style.width = '100%';
-                        statusText.textContent = 'Ab morgen früh auf dem Hörspieler 🎵';
+                        statusText.textContent = i18n('js.status.on_player_tomorrow');
                         if (cancelBtn) cancelBtn.hidden = true;
                         resetAddBtn();
                         saveJobsToStorage(jobIds, 'done');
                     } else if (s.status === 'failed') {
                         clearInterval(timer);
                         if (cancelBtn) cancelBtn.hidden = true;
-                        showError(prefix + 'Ging nicht: ' + s.text, retryBtn, statusText, s.item_id, id);
+                        showError(prefix + i18n('js.status.failed_with_reason', { text: s.text }), retryBtn, statusText, s.item_id, id);
                     } else if (s.status === 'cancelled') {
                         clearInterval(timer);
-                        statusText.textContent = 'Wurde abgebrochen';
+                        statusText.textContent = i18n('js.status.cancelled');
                         if (cancelBtn) cancelBtn.hidden = true;
                         resetAddBtn();
                     } else {
@@ -352,7 +367,7 @@ const hoerbox = (function () {
     }
 
     async function cancelAllJobs(jobIds) {
-        if (!confirm('Wirklich abbrechen?')) return;
+        if (!confirm(i18n('js.confirm.cancel_job'))) return;
         clearTimers();
         for (const id of jobIds) {
             try {
@@ -361,7 +376,7 @@ const hoerbox = (function () {
         }
         const cancelBtn = q('#cancel-btn');
         if (cancelBtn) cancelBtn.hidden = true;
-        q('#status-text').textContent = 'Wurde abgebrochen';
+        q('#status-text').textContent = i18n('js.status.cancelled');
         resetAddBtn();
         clearJobsFromStorage(jobIds);
     }
@@ -384,7 +399,7 @@ const hoerbox = (function () {
         }
         libraryBtn.onclick = () => { cleanup(); onChoice('library'); };
         deleteBtn.onclick = () => {
-            if (!confirm('Wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+            if (!confirm(i18n('js.confirm.delete_forever'))) return;
             cleanup();
             onChoice('delete');
         };
@@ -417,7 +432,7 @@ const hoerbox = (function () {
             if (deleteBtn) {
                 deleteBtn.hidden = false;
                 deleteBtn.onclick = async () => {
-                    if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+                    if (!confirm(i18n('js.confirm.delete_entry'))) return;
                     deleteBtn.disabled = true;
                     try {
                         await fetch('/api/item/' + itemId, { method: 'DELETE' });
@@ -425,7 +440,7 @@ const hoerbox = (function () {
                     deleteBtn.hidden = true;
                     deleteBtn.disabled = false;
                     retryBtn.hidden = true;
-                    statusText.textContent = 'Eintrag gelöscht.';
+                    statusText.textContent = i18n('js.status.entry_deleted');
                     clearJobsFromStorage([jobId]);
                     resetAddBtn();
                 };
@@ -621,9 +636,9 @@ const hoerbox = (function () {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ order: order })
             }).then(r => r.json());
-            toast(res.message || 'Reihenfolge gespeichert.');
+            toast(res.message || i18n('js.status.order_saved'));
         } catch (e) {
-            toast('Konnte nicht gespeichert werden.');
+            toast(i18n('js.toast.could_not_save'));
         }
     }
 
@@ -636,9 +651,9 @@ const hoerbox = (function () {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ order: order })
             }).then(r => r.json());
-            toast(res.message || 'Reihenfolge gespeichert.');
+            toast(res.message || i18n('js.status.order_saved'));
         } catch (e) {
-            toast('Konnte nicht gespeichert werden.');
+            toast(i18n('js.toast.could_not_save'));
         }
     }
 
@@ -648,7 +663,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte nicht erneut versucht werden.');
+            toast(i18n('js.toast.could_not_retry'));
         }
     }
 
@@ -658,7 +673,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte keine andere Quelle suchen.');
+            toast(i18n('js.toast.could_not_find_alt'));
         }
     }
 
@@ -686,7 +701,7 @@ const hoerbox = (function () {
         const audio = new Audio(url);
         audio.addEventListener('ended', stopPlayback);
         audio.play().catch(() => {
-            toast('Konnte nicht abspielen.');
+            toast(i18n('js.toast.could_not_play'));
             stopPlayback();
         });
         activeAudio = audio;
@@ -725,7 +740,7 @@ const hoerbox = (function () {
         info.appendChild(title);
         const meta = document.createElement('div');
         meta.className = 'alt-candidate-meta';
-        const mins = c.duration_seconds ? Math.round(c.duration_seconds / 60) + ' Min.' : '';
+        const mins = c.duration_seconds ? Math.round(c.duration_seconds / 60) + ' ' + i18n('js.candidate.minutes') : '';
         meta.textContent = [c.uploader, mins].filter(Boolean).join(' · ');
         info.appendChild(meta);
         card.appendChild(info);
@@ -734,7 +749,7 @@ const hoerbox = (function () {
         pickBtn.className = 'alt-candidate-pick-btn';
         pickBtn.dataset.id = itemId;
         pickBtn.dataset.url = c.url;
-        pickBtn.textContent = 'Diesen nehmen';
+        pickBtn.textContent = i18n('js.candidate.pick');
         card.appendChild(pickBtn);
         return card;
     }
@@ -742,7 +757,7 @@ const hoerbox = (function () {
     async function runAltSearch(itemId, query) {
         const resultsEl = q('.alt-search-results[data-id="' + itemId + '"]');
         if (!resultsEl || !query) return;
-        resultsEl.innerHTML = '<p class="alt-search-empty">Suche …</p>';
+        resultsEl.innerHTML = '<p class="alt-search-empty">' + i18n('js.toast.search_running') + '</p>';
         let res;
         try {
             res = await fetch('/api/item/' + itemId + '/search-alternative', {
@@ -751,14 +766,14 @@ const hoerbox = (function () {
                 body: JSON.stringify({ query: query })
             }).then(r => r.json());
         } catch (e) {
-            resultsEl.innerHTML = '<p class="alt-search-empty">Suche fehlgeschlagen.</p>';
+            resultsEl.innerHTML = '<p class="alt-search-empty">' + i18n('js.toast.search_failed') + '</p>';
             return;
         }
         resultsEl.innerHTML = '';
         if (!res.ok || !res.candidates || !res.candidates.length) {
             const p = document.createElement('p');
             p.className = 'alt-search-empty';
-            p.textContent = (res && res.message) || 'Keine Treffer – anderen Suchbegriff probieren.';
+            p.textContent = (res && res.message) || i18n('js.toast.no_results');
             resultsEl.appendChild(p);
             return;
         }
@@ -775,7 +790,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte nicht übernommen werden.');
+            toast(i18n('js.toast.could_not_apply'));
         }
     }
 
@@ -785,7 +800,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte nicht bestätigt werden.');
+            toast(i18n('js.toast.could_not_confirm'));
         }
     }
 
@@ -796,7 +811,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte nicht erneut versucht werden.');
+            toast(i18n('js.toast.could_not_retry'));
         }
     }
 
@@ -806,23 +821,23 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte keine andere Quelle suchen.');
+            toast(i18n('js.toast.could_not_find_alt'));
         }
     }
 
     async function deleteAllProblems() {
-        if (!confirm('Wirklich ALLE betroffenen Titel löschen?')) return;
+        if (!confirm(i18n('js.confirm.delete_all_problems'))) return;
         try {
             const res = await fetch('/api/problems/delete-all', { method: 'DELETE' }).then(r => r.json());
             toast(res.message);
             if (res.ok) location.reload();
         } catch (e) {
-            toast('Konnte nicht gelöscht werden.');
+            toast(i18n('js.toast.could_not_delete'));
         }
     }
 
     async function parkItem(itemId) {
-        if (!confirm('Diesen Titel in die Bibliothek verschieben?')) return;
+        if (!confirm(i18n('js.confirm.park_item'))) return;
         try {
             const res = await fetch('/api/item/' + itemId + '/park', { method: 'POST' }).then(r => r.json());
             toast(res.message);
@@ -831,12 +846,12 @@ const hoerbox = (function () {
                 removeRow(li);
             }
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function parkBlock(subId) {
-        if (!confirm('Diese ganze Playlist in die Bibliothek verschieben?')) return;
+        if (!confirm(i18n('js.confirm.park_block'))) return;
         try {
             const res = await fetch('/api/subscription/' + subId + '/park', { method: 'POST' }).then(r => r.json());
             toast(res.message);
@@ -845,12 +860,12 @@ const hoerbox = (function () {
                 removeRow(li);
             }
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function deleteBlock(subId) {
-        if (!confirm('Diese ganze Playlist wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.')) return;
+        if (!confirm(i18n('js.confirm.delete_block'))) return;
         try {
             const res = await fetch('/api/subscription/' + subId, { method: 'DELETE' }).then(r => r.json());
             toast(res.message);
@@ -861,14 +876,14 @@ const hoerbox = (function () {
                 if (card) setTimeout(() => location.reload(), 800);
             }
         } catch (e) {
-            toast('Konnte nicht gelöscht werden.');
+            toast(i18n('js.toast.could_not_delete'));
         }
     }
 
     async function moveItem(btn) {
         const select = document.querySelector('.item-channel-select[data-id="' + btn.dataset.id + '"]');
         const channelId = select.value;
-        if (!channelId) { toast('Bitte zuerst einen Kanal auswählen.'); return; }
+        if (!channelId) { toast(i18n('js.toast.pick_channel_first')); return; }
         try {
             const res = await fetch('/api/item/' + btn.dataset.id + '/assign', {
                 method: 'POST',
@@ -881,14 +896,14 @@ const hoerbox = (function () {
                 removeRow(li);
             }
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function moveBlock(btn) {
         const select = document.querySelector('.block-channel-select[data-sub-id="' + btn.dataset.subId + '"]');
         const channelId = select.value;
-        if (!channelId) { toast('Bitte zuerst einen Kanal auswählen.'); return; }
+        if (!channelId) { toast(i18n('js.toast.pick_channel_first')); return; }
         try {
             const res = await fetch('/api/subscription/' + btn.dataset.subId + '/assign', {
                 method: 'POST',
@@ -901,21 +916,21 @@ const hoerbox = (function () {
                 removeRow(li);
             }
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function deleteItem(itemId) {
-        if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+        if (!confirm(i18n('js.confirm.delete_entry'))) return;
         try {
             const res = await fetch('/api/item/' + itemId, { method: 'DELETE' }).then(r => r.json());
             if (res.ok) {
                 const li = document.querySelector('.item[data-id="' + itemId + '"]');
                 removeRow(li);
-                toast('Eintrag gelöscht.');
+                toast(i18n('js.status.entry_deleted'));
             }
         } catch (e) {
-            toast('Konnte nicht gelöscht werden.');
+            toast(i18n('js.toast.could_not_delete'));
         }
     }
 
@@ -953,7 +968,7 @@ const hoerbox = (function () {
     async function libMoveItem(btn) {
         const select = document.querySelector('.lib-item-channel-select[data-id="' + btn.dataset.id + '"]');
         const channelId = select.value;
-        if (!channelId) { toast('Bitte zuerst einen Kanal auswählen.'); return; }
+        if (!channelId) { toast(i18n('js.toast.pick_channel_first')); return; }
         try {
             const res = await fetch('/api/item/' + btn.dataset.id + '/assign', {
                 method: 'POST',
@@ -963,14 +978,14 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) setTimeout(() => location.reload(), 800);
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function libMoveBlock(btn) {
         const select = document.querySelector('.lib-block-channel-select[data-sub-id="' + btn.dataset.subId + '"]');
         const channelId = select.value;
-        if (!channelId) { toast('Bitte zuerst einen Kanal auswählen.'); return; }
+        if (!channelId) { toast(i18n('js.toast.pick_channel_first')); return; }
         try {
             const res = await fetch('/api/subscription/' + btn.dataset.subId + '/assign', {
                 method: 'POST',
@@ -980,7 +995,7 @@ const hoerbox = (function () {
             toast(res.message);
             if (res.ok) setTimeout(() => location.reload(), 800);
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
@@ -993,7 +1008,7 @@ const hoerbox = (function () {
             }).then(r => r.json());
             toast(res.message);
         } catch (e) {
-            toast('Konnte nicht geändert werden.');
+            toast(i18n('js.toast.could_not_change'));
         }
     }
 
@@ -1028,7 +1043,7 @@ const hoerbox = (function () {
     }
 
     async function deleteFile(channelId, filename, btn) {
-        if (!confirm(`"${filename}" wirklich löschen?`)) return;
+        if (!confirm(i18n('js.confirm.delete_file', { filename: filename }))) return;
         try {
             const res = await fetch(`/api/audio/${channelId}/${encodeURIComponent(filename)}`, {
                 method: 'DELETE'
@@ -1036,28 +1051,28 @@ const hoerbox = (function () {
             if (res.ok) {
                 const li = btn.closest('.file-item');
                 removeRow(li);
-                toast('Datei gelöscht.');
+                toast(i18n('js.status.file_deleted'));
                 // Reload to update counts
                 setTimeout(() => location.reload(), 1000);
             }
         } catch (e) {
-            toast('Konnte nicht gelöscht werden.');
+            toast(i18n('js.toast.could_not_delete'));
         }
     }
 
     async function parkAllToLibrary(channelId) {
-        if (!confirm('Alle Titel dieses Kanals in die Bibliothek verschieben?')) return;
+        if (!confirm(i18n('js.confirm.park_all_channel'))) return;
         try {
             const res = await fetch(`/api/kanal/${channelId}/park`, { method: 'POST' }).then(r => r.json());
             toast(res.message);
             if (res.ok) setTimeout(() => location.reload(), 1000);
         } catch (e) {
-            toast('Konnte nicht verschoben werden.');
+            toast(i18n('js.toast.could_not_move'));
         }
     }
 
     async function deleteAllFiles(channelId) {
-        if (!confirm('Wirklich ALLE Dateien dieses Kanals löschen?')) return;
+        if (!confirm(i18n('js.confirm.delete_all_files'))) return;
         try {
             const res = await fetch(`/api/audio/${channelId}`, { method: 'DELETE' }).then(r => r.json());
             if (res.ok) {
@@ -1068,7 +1083,7 @@ const hoerbox = (function () {
                 setTimeout(() => location.reload(), 1000);
             }
         } catch (e) {
-            toast('Konnte nicht gelöscht werden.');
+            toast(i18n('js.toast.could_not_delete'));
         }
     }
 

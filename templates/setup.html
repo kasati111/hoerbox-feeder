@@ -1,25 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Setup{% endblock %}
+{% block title %}{{ t('setup.title') }}{% endblock %}
 
 {% block content %}
 <section class="setup-page">
-    <h1>Setup</h1>
-    <p class="hint">Diese Adressen einmalig im Gerät eintragen. Danach musst du hier
-       nichts mehr tun – neue Inhalte erscheinen von selbst.</p>
+    <h1>{{ t('setup.h1') }}</h1>
+    <p class="hint">{{ t('setup.hint_top') }}</p>
 
     {% if cookies_ok %}
     <div class="cookie-status ok">
-        ✓ YouTube-Zugang aktiv
+        {{ t('setup.cookie_ok') }}
         <button type="button" class="cookie-update-btn" onclick="document.getElementById('cookie-upload-box').hidden=false;this.hidden=true;">
-            Erneuern
+            {{ t('setup.cookie_renew') }}
         </button>
     </div>
     {% else %}
     <div class="cookie-status warn">
-        ℹ YouTube-Zugang ist nicht eingerichtet – normalerweise nicht nötig.
-        Nur falls YouTube-Downloads blockiert werden, hier einrichten:
+        {{ t('setup.cookie_warn') }}
         <button type="button" class="cookie-update-btn" onclick="document.getElementById('cookie-upload-box').hidden=false;this.hidden=true;">
-            Einrichten
+            {{ t('setup.cookie_setup') }}
         </button>
     </div>
     {% endif %}
@@ -29,25 +27,25 @@
             <div class="cookie-step">
                 <span class="step-num">1</span>
                 <div>
-                    Browser-Erweiterung installieren:<br>
+                    {{ t('setup.cookie_step1') }}<br>
                     <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
                        target="_blank" rel="noopener">Chrome / Edge →</a>
                     &nbsp;
                     <a href="https://addons.mozilla.org/de/firefox/addon/cookies-txt/"
                        target="_blank" rel="noopener">Firefox →</a><br>
-                    <small>Dann auf youtube.com gehen, Erweiterung anklicken, „Export" drücken.</small>
+                    <small>{{ t('setup.cookie_step1_hint') }}</small>
                 </div>
             </div>
             <div class="cookie-step">
                 <span class="step-num">2</span>
                 <div>
-                    Exportierte Datei hier hochladen:<br>
+                    {{ t('setup.cookie_step2') }}<br>
                     <label class="cookie-file-label">
                         <input type="file" id="cookie-file" accept=".txt,text/plain">
-                        Datei auswählen …
+                        {{ t('setup.cookie_choose_file') }}
                     </label>
                     <button type="button" id="cookie-upload-btn" class="cookie-upload-btn" disabled>
-                        Hochladen
+                        {{ t('setup.cookie_upload_btn') }}
                     </button>
                     <span id="cookie-upload-msg"></span>
                 </div>
@@ -56,57 +54,73 @@
     </div>
 
     <div class="setup-card settings-card">
-        <h2>Maximale Downloads</h2>
-        <p class="hint">Wie viele Folgen soll eine Playlist oder ein Podcast höchstens
-           auf einmal laden? Der Rest kommt automatisch nach und nach nach.</p>
+        <h2>{{ t('setup.max_items_h2') }}</h2>
+        <p class="hint">{{ t('setup.max_items_hint') }}</p>
         <div class="settings-row">
             <input type="number" id="max-items-input" min="1" max="500" value="{{ max_items_per_list }}">
-            <button type="button" id="max-items-save" class="cookie-upload-btn">Speichern</button>
+            <button type="button" id="max-items-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
         </div>
         <span id="max-items-msg"></span>
     </div>
 
     <div class="setup-card settings-card">
-        <h2>Maximale Playlistlänge</h2>
-        <p class="hint">Wie viele Folgen sollen pro Kanal höchstens aufgehoben werden?
-           Kommen neue dazu, werden die ältesten darüber hinaus automatisch gelöscht.</p>
+        <h2>{{ t('setup.max_length_h2') }}</h2>
+        <p class="hint">{{ t('setup.max_length_hint') }}</p>
         <div class="settings-row">
             <input type="number" id="max-length-input" min="1" max="500" value="{{ max_playlist_length }}">
-            <button type="button" id="max-length-save" class="cookie-upload-btn">Speichern</button>
+            <button type="button" id="max-length-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
         </div>
         <span id="max-length-msg"></span>
     </div>
 
     <div class="setup-card settings-card">
-        <h2>Audioausgabe</h2>
+        <h2>{{ t('setup.audio_h2') }}</h2>
         <div class="settings-row">
-            <label><input type="radio" name="audio-channels" value="1" {% if audio_channels == 1 %}checked{% endif %}> Mono</label>
-            <label><input type="radio" name="audio-channels" value="2" {% if audio_channels == 2 %}checked{% endif %}> Stereo</label>
-            <button type="button" id="audio-channels-save" class="cookie-upload-btn">Speichern</button>
+            <label><input type="radio" name="audio-channels" value="1" {% if audio_channels == 1 %}checked{% endif %}> {{ t('setup.audio_mono') }}</label>
+            <label><input type="radio" name="audio-channels" value="2" {% if audio_channels == 2 %}checked{% endif %}> {{ t('setup.audio_stereo') }}</label>
+            <button type="button" id="audio-channels-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
         </div>
         <span id="audio-channels-msg"></span>
     </div>
 
-    <p class="hint">Diese Adressen einmalig im Hörspieler als Podcast hinzufügen – für jeden Knopf eine.</p>
+    <div class="setup-card settings-card">
+        <h2>{{ t('setup.language_h2') }}</h2>
+        <div class="settings-row">
+            <label><input type="radio" name="language" value="de" {% if lang == 'de' %}checked{% endif %}> {{ t('setup.language_de') }}</label>
+            <label><input type="radio" name="language" value="en" {% if lang == 'en' %}checked{% endif %}> {{ t('setup.language_en') }}</label>
+            <button type="button" id="language-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
+        </div>
+        <span id="language-msg"></span>
+    </div>
+
+    <div class="setup-card settings-card">
+        <h2>{{ t('setup.skin_h2') }}</h2>
+        <div class="settings-row">
+            <label><input type="radio" name="skin" value="colors" {% if skin == 'colors' %}checked{% endif %}> {{ t('setup.skin_colors') }}</label>
+            <label><input type="radio" name="skin" value="numbers" {% if skin == 'numbers' %}checked{% endif %}> {{ t('setup.skin_numbers') }}</label>
+            <button type="button" id="skin-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
+        </div>
+        <span id="skin-msg"></span>
+    </div>
+
+    <p class="hint">{{ t('setup.addresses_hint') }}</p>
     <div class="setup-callout">
-        💡 Läuft auf einem Knopf externer Content (z. B. von einer SD-Karte)? Dann
-        kannst Du ihn hier deaktivieren, indem Du auf den jeweiligen QR-Code klickst.
-        Der Feeder lässt ihn dann in Ruhe, damit nichts durcheinanderkommt.
+        {{ t('setup.deactivate_callout') }}
     </div>
     <div class="setup-grid">
         {% for entry in addresses %}
         <button type="button" class="setup-card channel-toggle {{ 'inactive' if not entry.channel.active }}"
                 data-channel="{{ entry.channel.id }}" data-active="{{ 1 if entry.channel.active else 0 }}"
-                style="--btn-color: {{ entry.channel.color_hex }};">
+                style="--btn-color: {{ channel_color_hex(entry.channel) }};">
             <div class="setup-head">
                 <span class="dot"></span>
-                <strong>{{ entry.channel.name }}</strong>
+                <strong>{{ channel_label(entry.channel) }}</strong>
             </div>
             {% if entry.channel.active %}
-            <img class="qr" src="{{ entry.qr }}" alt="QR-Code {{ entry.channel.name }}">
+            <img class="qr" src="{{ entry.qr }}" alt="{{ t('setup.qr_alt', name=channel_label(entry.channel)) }}">
             <code class="address">{{ entry.address }}</code>
             {% else %}
-            <p class="setup-inactive-hint">deaktiviert</p>
+            <p class="setup-inactive-hint">{{ t('setup.inactive_hint') }}</p>
             {% endif %}
         </button>
         {% endfor %}
@@ -116,9 +130,9 @@
 <div id="evict-dialog" class="modal-overlay" hidden>
     <div class="modal-box">
         <p id="evict-message"></p>
-        <button type="button" id="evict-library-btn" class="add-btn">In Bibliothek verschieben</button>
-        <button type="button" id="evict-delete-btn" class="cancel-btn">Endgültig löschen</button>
-        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">Abbrechen</button>
+        <button type="button" id="evict-library-btn" class="add-btn">{{ t('index.evict_move') }}</button>
+        <button type="button" id="evict-delete-btn" class="cancel-btn">{{ t('index.evict_delete') }}</button>
+        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">{{ t('common.cancel') }}</button>
     </div>
 </div>
 {% endblock %}
@@ -142,7 +156,7 @@
         const file = fileInput.files[0];
         if (!file) return;
         uploadBtn.disabled = true;
-        msg.textContent = 'Wird hochgeladen …';
+        msg.textContent = {{ t('setup.cookie_uploading') | js }};
         const fd = new FormData();
         fd.append('file', file);
         try {
@@ -153,12 +167,12 @@
                 setTimeout(() => location.reload(), 1200);
             } else {
                 msg.style.color = '#c62828';
-                msg.textContent = res.detail || 'Fehler beim Hochladen.';
+                msg.textContent = res.detail || {{ t('setup.cookie_upload_error') | js }};
                 uploadBtn.disabled = false;
             }
         } catch(e) {
             msg.style.color = '#c62828';
-            msg.textContent = 'Keine Verbindung.';
+            msg.textContent = {{ t('setup.no_connection') | js }};
             uploadBtn.disabled = false;
         }
     });
@@ -184,7 +198,7 @@
             msg.textContent = res.message;
         } catch (e) {
             msg.style.color = '#c62828';
-            msg.textContent = 'Keine Verbindung.';
+            msg.textContent = {{ t('setup.no_connection') | js }};
         }
         saveBtn.disabled = false;
     });
@@ -210,7 +224,7 @@
             msg.textContent = res.message;
         } catch (e) {
             msg.style.color = '#c62828';
-            msg.textContent = 'Keine Verbindung.';
+            msg.textContent = {{ t('setup.no_connection') | js }};
         }
         saveBtn.disabled = false;
     });
@@ -236,9 +250,75 @@
             msg.textContent = res.message;
         } catch (e) {
             msg.style.color = '#c62828';
-            msg.textContent = 'Keine Verbindung.';
+            msg.textContent = {{ t('setup.no_connection') | js }};
         }
         saveBtn.disabled = false;
+    });
+})();
+
+// Language and button-display changes affect every string/color on the
+// whole page (nav, all templates, channel names) -- a full reload is the
+// only way to reflect that everywhere at once, unlike the settings above
+// which only ever change a number used going forward.
+(function() {
+    const saveBtn = document.getElementById('language-save');
+    const msg = document.getElementById('language-msg');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async () => {
+        const checked = document.querySelector('input[name="language"]:checked');
+        const value = checked.value;
+        saveBtn.disabled = true;
+        msg.textContent = '';
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: value })
+            }).then(r => r.json());
+            if (res.ok) {
+                setTimeout(() => location.reload(), 400);
+            } else {
+                msg.style.color = '#c62828';
+                msg.textContent = res.message;
+                saveBtn.disabled = false;
+            }
+        } catch (e) {
+            msg.style.color = '#c62828';
+            msg.textContent = {{ t('setup.no_connection') | js }};
+            saveBtn.disabled = false;
+        }
+    });
+})();
+
+(function() {
+    const saveBtn = document.getElementById('skin-save');
+    const msg = document.getElementById('skin-msg');
+    if (!saveBtn) return;
+
+    saveBtn.addEventListener('click', async () => {
+        const checked = document.querySelector('input[name="skin"]:checked');
+        const value = checked.value;
+        saveBtn.disabled = true;
+        msg.textContent = '';
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ skin: value })
+            }).then(r => r.json());
+            if (res.ok) {
+                setTimeout(() => location.reload(), 400);
+            } else {
+                msg.style.color = '#c62828';
+                msg.textContent = res.message;
+                saveBtn.disabled = false;
+            }
+        } catch (e) {
+            msg.style.color = '#c62828';
+            msg.textContent = {{ t('setup.no_connection') | js }};
+            saveBtn.disabled = false;
+        }
     });
 })();
 </script>

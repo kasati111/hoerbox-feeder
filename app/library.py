@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from . import config, crud, feed
+from . import config, crud, feed, i18n
 
 logger = logging.getLogger("hoerbox.library")
 
@@ -23,9 +23,9 @@ class LibraryError(Exception):
     """Raised with a user-friendly, single-action message."""
 
 
-def _guard_in_flight(item) -> None:
+def _guard_in_flight(item, lang: str) -> None:
     if item.status in _IN_FLIGHT_STATUSES:
-        raise LibraryError("Dieser Titel wird gerade geladen – bitte kurz warten.")
+        raise LibraryError(i18n.t("library.item_downloading", lang))
 
 
 def _channel_dir(channel_id: int) -> Path:
@@ -64,10 +64,11 @@ def _move_file(item, target_channel_id: int) -> Optional[str]:
 
 
 def park_item(db: Session, item_id: int, base_url: str):
+    lang = crud.get_settings(db).language
     item = crud.get_item(db, item_id)
     if item is None:
-        raise LibraryError("Eintrag nicht gefunden.")
-    _guard_in_flight(item)
+        raise LibraryError(i18n.t("api.item_not_found", lang))
+    _guard_in_flight(item, lang)
     crud.update_item(db, item_id, in_library=1, library_added_at=datetime.utcnow())
     try:
         feed.write_feed_file(db, item.channel_id, base_url)
@@ -76,19 +77,20 @@ def park_item(db: Session, item_id: int, base_url: str):
     return crud.get_item(db, item_id)
 
 
-def _guard_channel_active(target_channel_id: int, channel) -> None:
+def _guard_channel_active(target_channel_id: int, channel, lang: str) -> None:
     if channel is None:
-        raise LibraryError("Diesen Knopf gibt es nicht.")
+        raise LibraryError(i18n.t("api.channel_not_found", lang))
     if not channel.active:
-        raise LibraryError("Dieser Knopf ist deaktiviert.")
+        raise LibraryError(i18n.t("api.channel_inactive", lang))
 
 
 def reassign_item(db: Session, item_id: int, target_channel_id: int, base_url: str):
+    lang = crud.get_settings(db).language
     item = crud.get_item(db, item_id)
     if item is None:
-        raise LibraryError("Eintrag nicht gefunden.")
-    _guard_channel_active(target_channel_id, crud.get_channel(db, target_channel_id))
-    _guard_in_flight(item)
+        raise LibraryError(i18n.t("api.item_not_found", lang))
+    _guard_channel_active(target_channel_id, crud.get_channel(db, target_channel_id), lang)
+    _guard_in_flight(item, lang)
 
     old_channel_id = item.channel_id
     new_filename = item.filename
@@ -138,7 +140,8 @@ def park_channel(db: Session, channel_id: int, base_url: str) -> int:
 
 
 def reassign_block(db: Session, subscription_id: int, target_channel_id: int, base_url: str) -> int:
-    _guard_channel_active(target_channel_id, crud.get_channel(db, target_channel_id))
+    lang = crud.get_settings(db).language
+    _guard_channel_active(target_channel_id, crud.get_channel(db, target_channel_id), lang)
     items = crud.list_items_by_subscription(db, subscription_id)
     count = 0
     for item in items:

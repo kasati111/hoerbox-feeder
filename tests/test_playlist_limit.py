@@ -23,7 +23,7 @@ def test_large_playlist_limited(db, monkeypatch):
     )
 
     # Mock downloader.analyze to return our fake large playlist.
-    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url: fake_info)
+    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url, lang="de": fake_info)
 
     # Mock worker and scheduler to avoid side effects.
     monkeypatch.setattr("app.routers.api.worker.storage_ok", lambda: True)
@@ -73,7 +73,7 @@ def test_small_playlist_not_limited(db, monkeypatch):
         entries=fake_entries
     )
 
-    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url: fake_info)
+    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url, lang="de": fake_info)
     monkeypatch.setattr("app.routers.api.worker.storage_ok", lambda: True)
     monkeypatch.setattr("app.routers.api.worker.wake", lambda: None)
     monkeypatch.setattr("app.routers.api.refresh_jobs", lambda: None)
@@ -105,7 +105,7 @@ def test_single_video_not_limited(db, monkeypatch):
         entries=[downloader.SourceEntry(url="https://example.com/video", title="Single Video")]
     )
 
-    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url: fake_info)
+    monkeypatch.setattr("app.routers.api.downloader.analyze", lambda url, lang="de": fake_info)
     monkeypatch.setattr("app.routers.api.worker.storage_ok", lambda: True)
     monkeypatch.setattr("app.routers.api.worker.wake", lambda: None)
 

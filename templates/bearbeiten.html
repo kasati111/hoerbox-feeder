@@ -1,20 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Bearbeiten{% endblock %}
+{% block title %}{{ t('bearbeiten.title') }}{% endblock %}
 
 {% block content %}
 <section class="add-box">
-    <h1>Bearbeiten</h1>
-    <p class="hint">Welchen Knopf möchtest du bearbeiten?</p>
+    <h1>{{ t('bearbeiten.h1') }}</h1>
+    <p class="hint">{{ t('bearbeiten.hint') }}</p>
 
     <div class="color-grid">
         {% for ch in channels %}
         <a class="color-btn {{ 'inactive' if not ch.active }}" href="/kanal/{{ ch.id }}"
-           style="--btn-color: {{ ch.color_hex }};">
+           style="--btn-color: {{ channel_color_hex(ch) }};">
             <span class="dot"></span>
-            <span class="name">{{ ch.name }}</span>
-            {% if not ch.active %}<span class="muted-chip">inaktiv</span>{% endif %}
+            <span class="name">{{ channel_label(ch) }}</span>
+            {% if not ch.active %}<span class="muted-chip">{{ t('common.inactive') }}</span>{% endif %}
             {% if ch.id in problem_channels %}<span class="warn-chip" title="{{ problem_channels[ch.id].hint }}">{{ problem_channels[ch.id].count }}</span>{% endif %}
-            {% if ch.id in unreviewed_channels %}<span class="warn-chip alt-review-chip" title="Automatisch ersetzte Titel, noch nicht geprüft">⟳ {{ unreviewed_channels[ch.id] }}</span>{% endif %}
+            {% if ch.id in unreviewed_channels %}<span class="warn-chip alt-review-chip" title="{{ t('bearbeiten.unreviewed_title') }}">⟳ {{ unreviewed_channels[ch.id] }}</span>{% endif %}
         </a>
         {% endfor %}
     </div>

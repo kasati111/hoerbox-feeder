@@ -11,6 +11,16 @@ from zoneinfo import ZoneInfo
 TIMEZONE_NAME = os.getenv("TZ", "Europe/Berlin")
 TZ = ZoneInfo(TIMEZONE_NAME)
 
+# --- Language -----------------------------------------------------------------
+# Seed default only (like AUDIO_CHANNELS below) -- once the app has started,
+# the live value lives in Settings.language and is editable on the Setup
+# page. Validated against the supported set: this container doesn't set a
+# system LANG itself, but if an operator's environment ever does (locale
+# vars are common), a value like "C.UTF-8" must not silently become the
+# app's UI language -- fall back to "de" instead.
+_lang_env = os.getenv("LANG", "de").split(".")[0].split("_")[0].lower()
+LANG = _lang_env if _lang_env in ("de", "en") else "de"
+
 # --- Paths ------------------------------------------------------------------
 # Inside the container these live on named volumes (see docker-compose.yml).
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
@@ -91,12 +101,6 @@ CHANNELS = [
     {"id": 7, "name": "Orange",     "color": "orange",    "color_hex": "#F57C00"},
     {"id": 8, "name": "Dunkelgrün", "color": "darkgreen", "color_hex": "#2E7D32"},
 ]
-
-# Legal notice shown in the UI footer and README.
-LEGAL_NOTICE = (
-    "Downloads können AGB und Urheberrecht verletzen. Empfohlen für Podcasts "
-    "mit offenem Feed, gemeinfreie Inhalte und eigenes Material."
-)
 
 
 def ensure_dirs() -> None:

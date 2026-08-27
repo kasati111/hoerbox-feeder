@@ -30,10 +30,11 @@ def sync_subscription(sub_id: int) -> None:
             return
         channel_id = sub.channel_id
         source_url = sub.source_url
+        lang = crud.get_settings(db).language
         crud.update_subscription(db, sub_id, last_run_at=datetime.utcnow())
 
     try:
-        info = downloader.analyze(source_url)
+        info = downloader.analyze(source_url, lang)
     except Exception as exc:  # noqa: BLE001
         logger.error("subscription %s analyze failed: %s", sub_id, exc)
         return

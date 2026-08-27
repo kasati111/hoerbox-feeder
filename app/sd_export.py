@@ -17,7 +17,7 @@ from typing import Iterator, NamedTuple
 
 from sqlalchemy.orm import Session
 
-from . import config, crud, downloader
+from . import config, crud, downloader, i18n
 
 logger = logging.getLogger("hoerbox.sd_export")
 
@@ -54,19 +54,13 @@ def _iter_export_files(db: Session) -> Iterator[ExportFile]:
             yield ExportFile(channel.id, dest_name, src)
 
 
-def _check_target(target: Path) -> None:
+def _check_target(target: Path, lang: str) -> None:
     if not target.exists():
-        raise SDExportError(
-            "Es ist keine Karte eingesteckt. → Karte einstecken und erneut tippen."
-        )
+        raise SDExportError(i18n.t("sdexport.no_card", lang))
     if not target.is_dir():
-        raise SDExportError(
-            "Der Kartenpfad stimmt nicht. → Karte neu einstecken und erneut tippen."
-        )
+        raise SDExportError(i18n.t("sdexport.bad_path", lang))
     if not os.access(str(target), os.W_OK):
-        raise SDExportError(
-            "Auf die Karte kann nicht geschrieben werden. → Schreibschutz prüfen."
-        )
+        raise SDExportError(i18n.t("sdexport.not_writable", lang))
 
 
 def export_to_sd(db: Session, target_path: str) -> dict:
@@ -74,8 +68,9 @@ def export_to_sd(db: Session, target_path: str) -> dict:
 
     Returns a summary dict. Raises SDExportError with a single action on failure.
     """
+    lang = crud.get_settings(db).language
     target = Path(target_path)
-    _check_target(target)
+    _check_target(target, lang)
 
     for channel in crud.list_channels(db):
         folder = target / str(channel.id)
@@ -98,10 +93,7 @@ def export_to_sd(db: Session, target_path: str) -> dict:
     return {
         "ok": True,
         "files": total_files,
-        "message": (
-            f"{total_files} Titel auf die Karte geschrieben. "
-            "→ Karte jetzt sicher entnehmen und ins Gerät stecken."
-        ),
+        "message": i18n.t("sdexport.done", lang, count=total_files),
     }
 
 

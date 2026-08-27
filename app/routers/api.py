@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
-from .. import config, crud, downloader, feed, library, sd_export, worker
+from .. import config, crud, downloader, feed, i18n, library, sd_export, worker
 from ..database import get_db
 from ..scheduler import refresh_jobs
 
@@ -28,6 +28,11 @@ def _base_url(request: Request) -> str:
     return str(request.base_url).rstrip("/")
 
 
+def _lang_skin(db: Session) -> tuple[str, str]:
+    settings = crud.get_settings(db)
+    return settings.language, settings.skin
+
+
 class AddRequest(BaseModel):
     url: str
     channel: int
@@ -38,35 +43,37 @@ class AddRequest(BaseModel):
 @router.post("/add")
 def add_content(payload: AddRequest, request: Request, db: Session = Depends(get_db)):
     """Add a link to a channel. Series become auto-subscriptions."""
+    lang, skin = _lang_skin(db)
     channel = crud.get_channel(db, payload.channel)
     if channel is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     if not channel.active:
-        raise HTTPException(status_code=400, detail="Dieser Knopf ist deaktiviert.")
+        raise HTTPException(status_code=400, detail=i18n.t("api.channel_inactive", lang))
 
     url = payload.url.strip()
     if not url:
-        return {"ok": False, "message": "Bitte zuerst einen Link einfügen.",
-                "action": "Link einfügen"}
+        return {"ok": False, "message": i18n.t("api.paste_link_first", lang),
+                "action": i18n.t("api.paste_link_action", lang)}
 
     # Storage guard.
     if not worker.storage_ok():
         tidy = worker.channel_with_most_items(db)
-        tidy_name = crud.get_channel(db, tidy).name
+        tidy_channel = crud.get_channel(db, tidy)
+        tidy_name = i18n.channel_label(tidy_channel, lang, skin)
         return {
             "ok": False,
-            "message": f"Kein Platz mehr. Räume den Kanal „{tidy_name}“ auf.",
-            "action": "Aufräumen",
+            "message": i18n.t("api.no_space", lang, name=tidy_name),
+            "action": i18n.t("api.tidy_up_action", lang),
         }
 
     try:
-        info = downloader.analyze(url)
+        info = downloader.analyze(url, lang)
     except Exception as exc:  # noqa: BLE001
         logger.error("analyze failed url=%s error=%s", url, exc)
         return {
             "ok": False,
-            "message": "Der Link ließ sich nicht öffnen.",
-            "action": "Nochmal versuchen",
+            "message": i18n.t("api.link_failed", lang),
+            "action": i18n.t("api.try_again_action", lang),
         }
 
     job_ids = []
@@ -107,11 +114,11 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
                         titles.append(sub.title if sub and sub.title else first_item.title)
                     else:
                         titles.append(crud.get_item(db, unit["item_ids"][0]).title)
-                names = ", ".join(f"„{t}“" for t in titles)
+                names = ", ".join(i18n.quote(title, lang) for title in titles)
                 return {
                     "ok": True,
                     "needs_confirmation": True,
-                    "message": f"Um Platz zu machen, ist kein Platz mehr für: {names}.",
+                    "message": i18n.t("api.eviction_needed", lang, names=names),
                 }
             if plan and payload.confirm_evict:
                 base_url = _base_url(request)
@@ -148,7 +155,7 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
         return {
             "ok": True,
             "duplicate": True,
-            "message": "Das ist auf diesem Knopf schon vorhanden.",
+            "message": i18n.t("api.already_exists", lang),
             "job_ids": [],
             "is_series": is_series,
         }
@@ -175,16 +182,20 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
             (e.title for e in entries_to_process if e.title), None
         )
 
-    message = "Wird vorbereitet …"
+    message = i18n.t("api.preparing", lang)
     if is_series:
-        label = f"„{series_title}“ ({channel.name})" if series_title else "Die Liste"
+        channel_name = i18n.channel_label(channel, lang, skin)
+        label = f"{i18n.quote(series_title, lang)} ({channel_name})" if series_title else i18n.t("api.the_list", lang)
         if total_entries > limit:
-            message = (f"{label} hat {total_entries} Folgen – "
-                       f"die neuesten {created_items} werden jetzt geladen. "
-                       f"Neue Folgen kommen automatisch.")
+            message = i18n.t(
+                "api.series_over_limit", lang,
+                label=label, total=total_entries, created=created_items,
+            )
         else:
-            message = (f"{label}: {created_items} Folgen werden jetzt geladen. "
-                       f"Neue Folgen kommen automatisch.")
+            message = i18n.t(
+                "api.series_all_loading", lang,
+                label=label, created=created_items,
+            )
 
     return {
         "ok": True,
@@ -198,9 +209,10 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
 
 @router.get("/job/{job_id}/status")
 def job_status(job_id: int, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     job = crud.get_job(db, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="Auftrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.job_not_found", lang))
 
     is_backoff = job.status == "queued" and bool(job.error_text)
     if is_backoff:
@@ -215,22 +227,22 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
     elif job.status == "queued":
         pos = crud.queue_position(db, job)
         if crud.worker_busy(db) or pos > 1:
-            text = f"Wird geladen (aktuell in Warteposition {pos})"
+            text = i18n.t("api.queue_position", lang, pos=pos)
         else:
-            text = "Wird vorbereitet …"
+            text = i18n.t("api.preparing", lang)
     elif job.status == "running":
         pct = job.progress or 0
         if pct >= 90:
             # Download is finished; ffmpeg conversion is running.
-            text = "Umwandlung zu Audio …"
+            text = i18n.t("api.converting", lang)
         else:
-            text = f"Wird geladen … {pct} %"
+            text = i18n.t("api.loading_percent", lang, pct=pct)
     elif job.status == "done":
-        text = "Ab morgen früh auf dem Hörspieler 🎵"
+        text = i18n.t("api.on_player_tomorrow", lang)
     elif job.status == "cancelled":
-        text = "Wurde abgebrochen"
+        text = i18n.t("api.cancelled", lang)
     else:  # failed
-        reason = job.error_text or "Unbekannter Grund"
+        reason = job.error_text or i18n.t("api.unknown_reason", lang)
         text = reason
 
     item = crud.get_item(db, job.item_id)
@@ -239,7 +251,7 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
         "status": job.status,
         "progress": job.progress or 0,
         "text": text,
-        "action": "Nochmal versuchen" if job.status == "failed" else None,
+        "action": i18n.t("api.try_again_action", lang) if job.status == "failed" else None,
         "can_cancel": job.status in ("queued", "running"),
         "item_id": job.item_id,
         "is_backoff": is_backoff,
@@ -254,18 +266,19 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
 @router.delete("/job/{job_id}")
 def cancel_job(job_id: int, db: Session = Depends(get_db)):
     """Cancel a queued or running job."""
+    lang, _skin = _lang_skin(db)
     job = crud.get_job(db, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="Auftrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.job_not_found", lang))
 
     if job.status not in ("queued", "running"):
-        return {"ok": False, "message": "Der Auftrag kann nicht mehr abgebrochen werden."}
+        return {"ok": False, "message": i18n.t("api.job_cannot_cancel", lang)}
 
-    crud.update_job(db, job_id, status="cancelled", error_text="Abgebrochen")
+    crud.update_job(db, job_id, status="cancelled", error_text=i18n.t("api.cancelled_short", lang))
     if job.item_id:
-        crud.update_item(db, job.item_id, status="cancelled", error_text="Abgebrochen")
+        crud.update_item(db, job.item_id, status="cancelled", error_text=i18n.t("api.cancelled_short", lang))
 
-    return {"ok": True, "message": "Auftrag wurde abgebrochen."}
+    return {"ok": True, "message": i18n.t("api.job_was_cancelled", lang)}
 
 
 @router.post("/item/{item_id}/retry")
@@ -273,11 +286,12 @@ def retry_item(item_id: int, db: Session = Depends(get_db)):
     """Retry a failed or backing-off item right now, instead of waiting out
     the exponential backoff (or giving up after MAX_ATTEMPTS).
     """
+    lang, _skin = _lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     if not item.error_text and item.status != "failed":
-        return {"ok": False, "message": "Dieser Eintrag hat gerade kein Problem."}
+        return {"ok": False, "message": i18n.t("api.no_current_problem", lang)}
 
     job = crud.latest_job_for_item(db, item_id) or crud.create_job(db, item_id)
     crud.update_job(
@@ -286,7 +300,7 @@ def retry_item(item_id: int, db: Session = Depends(get_db)):
     )
     crud.update_item(db, item_id, status="queued", error_text=None)
     worker.wake()
-    return {"ok": True, "message": "Wird erneut versucht.", "job_id": job.id}
+    return {"ok": True, "message": i18n.t("api.will_retry", lang), "job_id": job.id}
 
 
 @router.post("/item/{item_id}/find-alternative")
@@ -299,11 +313,12 @@ def find_alternative(item_id: int, db: Session = Depends(get_db)):
     needed. Sets Item.alt_source_url rather than overwriting source_url, so
     a subscription-linked item keeps matching correctly on future syncs.
     """
+    lang, _skin = _lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     if not item.error_text and item.status != "failed":
-        return {"ok": False, "message": "Dieser Eintrag hat gerade kein Problem."}
+        return {"ok": False, "message": i18n.t("api.no_current_problem", lang)}
     # Before giving up, try once to recover a real title (a flat playlist
     # listing, e.g. a SoundCloud set, can leave this "Ohne Titel" even
     # though the track has a perfectly good real one) — see
@@ -316,7 +331,7 @@ def find_alternative(item_id: int, db: Session = Depends(get_db)):
         # guessing.
         return {
             "ok": False,
-            "message": "Kein Titel bekannt – bitte selbst nach einem Ersatz suchen.",
+            "message": i18n.t("api.no_title_search_self", lang),
         }
 
     query = downloader.default_search_query(title, crud.item_search_context(db, item))
@@ -330,7 +345,7 @@ def find_alternative(item_id: int, db: Session = Depends(get_db)):
         next_attempt_at=None, attempt_count=0, progress=0,
     )
     worker.wake()
-    return {"ok": True, "message": "Suche nach anderer Quelle gestartet …", "job_id": job.id}
+    return {"ok": True, "message": i18n.t("api.searching_alt_source", lang), "job_id": job.id}
 
 
 class SearchAlternativeRequest(BaseModel):
@@ -343,16 +358,17 @@ def search_alternative(item_id: int, payload: SearchAlternativeRequest, db: Sess
     DB mutation, no download. The human-verifiable counterpart to the blind
     ytsearch1: guess: shows title/uploader/duration/thumbnail so a parent can
     actually tell the candidates apart before committing to one."""
+    lang, _skin = _lang_skin(db)
     if crud.get_item(db, item_id) is None:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     query = payload.query.strip()
     if not query:
-        return {"ok": False, "message": "Bitte einen Suchbegriff eingeben.", "candidates": []}
+        return {"ok": False, "message": i18n.t("api.enter_search_term", lang), "candidates": []}
     try:
-        candidates = downloader.search_candidates(query)
+        candidates = downloader.search_candidates(query, lang=lang)
     except Exception as exc:  # noqa: BLE001
         logger.warning("search_candidates failed for %r: %s", query, exc)
-        return {"ok": False, "message": "Suche ist fehlgeschlagen.", "candidates": []}
+        return {"ok": False, "message": i18n.t("api.search_failed", lang), "candidates": []}
     return {
         "ok": True,
         "candidates": [
@@ -377,12 +393,13 @@ def pick_alternative(item_id: int, payload: PickAlternativeRequest, db: Session 
     retry) and marks it reviewed — a human saw the thumbnail/title/uploader
     and chose it, so it shouldn't keep showing the "please check this" hint.
     """
+    lang, _skin = _lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     url = payload.url.strip()
     if not url:
-        return {"ok": False, "message": "Keine Quelle ausgewählt."}
+        return {"ok": False, "message": i18n.t("api.no_source_selected", lang)}
 
     crud.update_item(
         db, item_id, alt_source_url=url, alt_source_reviewed=1,
@@ -394,7 +411,7 @@ def pick_alternative(item_id: int, payload: PickAlternativeRequest, db: Session 
         next_attempt_at=None, attempt_count=0, progress=0,
     )
     worker.wake()
-    return {"ok": True, "message": "Wird mit der ausgewählten Quelle geladen …", "job_id": job.id}
+    return {"ok": True, "message": i18n.t("api.loading_with_picked_source", lang), "job_id": job.id}
 
 
 @router.post("/item/{item_id}/confirm-alternative")
@@ -402,11 +419,12 @@ def confirm_alternative(item_id: int, db: Session = Depends(get_db)):
     """Dismiss the "please check this" hint without touching the audio —
     for when a parent has listened/looked and the auto-substituted content
     is actually fine as-is."""
+    lang, _skin = _lang_skin(db)
     item = crud.get_item(db, item_id)
     if item is None:
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
     crud.update_item(db, item_id, alt_source_reviewed=1)
-    return {"ok": True, "message": "Bestätigt."}
+    return {"ok": True, "message": i18n.t("api.confirmed", lang)}
 
 
 @router.post("/problems/retry-all")
@@ -415,6 +433,7 @@ def retry_all_problems(db: Session = Depends(get_db)):
     crud.list_problem_items) — backs the Start page's single "Alle nochmal
     versuchen" action, which replaces a per-item card list there; individual
     handling still lives in the channel view via retry_item()."""
+    lang, _skin = _lang_skin(db)
     items = crud.list_problem_items(db)
     for item in items:
         job = crud.latest_job_for_item(db, item.id) or crud.create_job(db, item.id)
@@ -428,7 +447,11 @@ def retry_all_problems(db: Session = Depends(get_db)):
     count = len(items)
     return {
         "ok": True, "count": count,
-        "message": f"{count} Titel {'wird' if count == 1 else 'werden'} erneut versucht.",
+        "message": i18n.t(
+            "api.retry_count", lang, count=count,
+            verb="wird" if count == 1 else "werden",
+            s="" if count == 1 else "s",
+        ),
     }
 
 
@@ -438,6 +461,7 @@ def find_alternative_all_problems(db: Session = Depends(get_db)):
     Items with a placeholder title (no real title to search with) are
     skipped rather than fed a guaranteed-wrong blind search — see
     find_alternative()'s single-item guard for why."""
+    lang, _skin = _lang_skin(db)
     items = [i for i in crud.list_problem_items(db) if not downloader.is_placeholder_title(i.title)]
     for item in items:
         query = downloader.default_search_query(item.title, crud.item_search_context(db, item))
@@ -455,7 +479,7 @@ def find_alternative_all_problems(db: Session = Depends(get_db)):
     count = len(items)
     return {
         "ok": True, "count": count,
-        "message": f"Suche nach anderen Quellen für {count} Titel gestartet …",
+        "message": i18n.t("api.find_alt_count", lang, count=count, s="" if count == 1 else "s"),
     }
 
 
@@ -466,14 +490,15 @@ class ReorderRequest(BaseModel):
 @router.post("/kanal/{n}/reorder")
 def reorder(n: int, payload: ReorderRequest, request: Request,
             db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     if crud.get_channel(db, n) is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     crud.reorder_items(db, n, payload.order)
     try:
         feed.write_feed_file(db, n, _base_url(request))
     except Exception as exc:  # noqa: BLE001
         logger.warning("feed write failed: %s", exc)
-    return {"ok": True, "message": "Reihenfolge gespeichert."}
+    return {"ok": True, "message": i18n.t("api.order_saved", lang)}
 
 
 class ReorderBlocksRequest(BaseModel):
@@ -485,14 +510,15 @@ def reorder_blocks(n: int, payload: ReorderBlocksRequest, request: Request,
                     db: Session = Depends(get_db)):
     """Reorder a channel's top-level list of blocks/singles (separate payload
     shape from /reorder's flat item-id list, so existing callers keep working)."""
+    lang, _skin = _lang_skin(db)
     if crud.get_channel(db, n) is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     crud.reorder_blocks(db, n, payload.order)
     try:
         feed.write_feed_file(db, n, _base_url(request))
     except Exception as exc:  # noqa: BLE001
         logger.warning("feed write failed: %s", exc)
-    return {"ok": True, "message": "Reihenfolge gespeichert."}
+    return {"ok": True, "message": i18n.t("api.order_saved", lang)}
 
 
 class ReorderSubscriptionRequest(BaseModel):
@@ -503,15 +529,16 @@ class ReorderSubscriptionRequest(BaseModel):
 def reorder_subscription(sub_id: int, payload: ReorderSubscriptionRequest, request: Request,
                           db: Session = Depends(get_db)):
     """Reorder the episodes within one playlist block."""
+    lang, _skin = _lang_skin(db)
     sub = crud.get_subscription(db, sub_id)
     if sub is None:
-        raise HTTPException(status_code=404, detail="Abo nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     crud.reorder_subscription_items(db, sub_id, payload.order)
     try:
         feed.write_feed_file(db, sub.channel_id, _base_url(request))
     except Exception as exc:  # noqa: BLE001
         logger.warning("feed write failed: %s", exc)
-    return {"ok": True, "message": "Reihenfolge gespeichert."}
+    return {"ok": True, "message": i18n.t("api.order_saved", lang)}
 
 
 def _delete_item_and_file(db: Session, item_id: int, base_url: str) -> bool:
@@ -561,38 +588,43 @@ def _delete_subscription_and_files(db: Session, sub_id: int, base_url: str) -> i
 
 @router.delete("/item/{item_id}")
 def delete_item(item_id: int, request: Request, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     if not _delete_item_and_file(db, item_id, _base_url(request)):
-        raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
-    return {"ok": True, "message": "Eintrag gelöscht."}
+        raise HTTPException(status_code=404, detail=i18n.t("api.item_not_found", lang))
+    return {"ok": True, "message": i18n.t("api.entry_deleted", lang)}
 
 
 @router.delete("/problems/delete-all")
 def delete_all_problems(request: Request, db: Session = Depends(get_db)):
     """Bulk version of delete_item() for every currently flagged item."""
+    lang, _skin = _lang_skin(db)
     items = crud.list_problem_items(db)
     base_url = _base_url(request)
     count = 0
     for item in items:
         if _delete_item_and_file(db, item.id, base_url):
             count += 1
-    return {"ok": True, "count": count, "message": f"{count} Titel gelöscht."}
+    return {"ok": True, "count": count,
+            "message": i18n.t("api.count_deleted", lang, count=count, s="" if count == 1 else "s")}
 
 
 @router.delete("/subscription/{sub_id}")
 def delete_subscription(sub_id: int, request: Request, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
-        raise HTTPException(status_code=404, detail="Abo nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     count = _delete_subscription_and_files(db, sub_id, _base_url(request))
-    return {"ok": True, "message": f"{count} Folgen gelöscht."}
+    return {"ok": True, "message": i18n.t("api.episodes_deleted", lang, count=count, s="" if count == 1 else "s")}
 
 
 @router.post("/item/{item_id}/park")
 def park_item(item_id: int, request: Request, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     try:
         library.park_item(db, item_id, _base_url(request))
     except library.LibraryError as exc:
         return {"ok": False, "message": str(exc)}
-    return {"ok": True, "message": "In die Bibliothek verschoben."}
+    return {"ok": True, "message": i18n.t("api.moved_to_library", lang)}
 
 
 class AssignRequest(BaseModel):
@@ -602,36 +634,43 @@ class AssignRequest(BaseModel):
 @router.post("/item/{item_id}/assign")
 def assign_item(item_id: int, payload: AssignRequest, request: Request,
                  db: Session = Depends(get_db)):
+    lang, skin = _lang_skin(db)
     try:
         library.reassign_item(db, item_id, payload.channel_id, _base_url(request))
     except library.LibraryError as exc:
         return {"ok": False, "message": str(exc)}
     channel = crud.get_channel(db, payload.channel_id)
-    return {"ok": True, "message": f"Auf „{channel.name}“ verschoben."}
+    return {"ok": True, "message": i18n.t("api.moved_to_channel", lang, name=i18n.channel_label(channel, lang, skin))}
 
 
 @router.post("/subscription/{sub_id}/park")
 def park_subscription(sub_id: int, request: Request, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
-        raise HTTPException(status_code=404, detail="Abo nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     try:
         count = library.park_block(db, sub_id, _base_url(request))
     except library.LibraryError as exc:
         return {"ok": False, "message": str(exc)}
-    return {"ok": True, "message": f"{count} Folgen in die Bibliothek verschoben."}
+    message = i18n.t("api.episodes_moved_to_library", lang, count=count, s="" if count == 1 else "s")
+    return {"ok": True, "message": message}
 
 
 @router.post("/subscription/{sub_id}/assign")
 def assign_subscription(sub_id: int, payload: AssignRequest, request: Request,
                          db: Session = Depends(get_db)):
+    lang, skin = _lang_skin(db)
     if crud.get_subscription(db, sub_id) is None:
-        raise HTTPException(status_code=404, detail="Abo nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
     try:
         count = library.reassign_block(db, sub_id, payload.channel_id, _base_url(request))
     except library.LibraryError as exc:
         return {"ok": False, "message": str(exc)}
     channel = crud.get_channel(db, payload.channel_id)
-    return {"ok": True, "message": f"{count} Folgen auf „{channel.name}“ verschoben."}
+    return {"ok": True, "message": i18n.t(
+        "api.episodes_moved_to_channel", lang, count=count,
+        s="" if count == 1 else "s", name=i18n.channel_label(channel, lang, skin),
+    )}
 
 
 class AboToggleRequest(BaseModel):
@@ -640,13 +679,14 @@ class AboToggleRequest(BaseModel):
 
 @router.post("/kanal/{n}/abo-toggle")
 def abo_toggle(n: int, payload: AboToggleRequest, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     if crud.get_channel(db, n) is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     subs = crud.set_subscription_enabled(db, n, payload.enabled)
     refresh_jobs()
-    state = "an" if payload.enabled else "aus"
+    state = i18n.t("api.abo_on", lang) if payload.enabled else i18n.t("api.abo_off", lang)
     return {"ok": True, "enabled": payload.enabled,
-            "message": f"Automatisches Holen ist jetzt {state}.",
+            "message": i18n.t("api.abo_state", lang, state=state),
             "count": len(subs)}
 
 
@@ -661,11 +701,13 @@ def park_channel(n: int, request: Request, db: Session = Depends(get_db)):
     does for a single playlist) -- otherwise the next Abo-Sync would just
     pull the parked episodes' successors straight back into the now-empty
     channel, undoing the point of "move everything out"."""
+    lang, _skin = _lang_skin(db)
     if crud.get_channel(db, n) is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     count = library.park_channel(db, n, _base_url(request))
     crud.set_subscription_enabled(db, n, False)
-    return {"ok": True, "message": f"{count} Folgen in die Bibliothek verschoben.", "count": count}
+    message = i18n.t("api.episodes_moved_to_library", lang, count=count, s="" if count == 1 else "s")
+    return {"ok": True, "message": message, "count": count}
 
 
 class ChannelActiveRequest(BaseModel):
@@ -675,67 +717,95 @@ class ChannelActiveRequest(BaseModel):
 
 @router.post("/kanal/{n}/set-active")
 def set_channel_active(n: int, payload: ChannelActiveRequest, request: Request, db: Session = Depends(get_db)):
+    lang, skin = _lang_skin(db)
     channel = crud.get_channel(db, n)
     if channel is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
+    name = i18n.channel_label(channel, lang, skin)
 
     if payload.active:
         crud.set_channel_active(db, n, True)
-        return {"ok": True, "active": True, "message": f"„{channel.name}“ ist wieder aktiv."}
+        return {"ok": True, "active": True, "message": i18n.t("api.channel_active_again", lang, name=name)}
 
     if crud.channel_has_content(db, n) and not payload.move_to_library:
         return {
             "ok": False,
             "needs_confirmation": True,
-            "message": f"„{channel.name}“ hat noch Inhalte. In Bibliothek verschieben oder abbrechen?",
+            "message": i18n.t("api.channel_has_content", lang, name=name),
         }
 
     if payload.move_to_library:
         library.park_channel(db, n, _base_url(request))
     crud.set_subscription_enabled(db, n, False)
     crud.set_channel_active(db, n, False)
-    return {"ok": True, "active": False, "message": f"„{channel.name}“ ist jetzt inaktiv."}
+    return {"ok": True, "active": False, "message": i18n.t("api.channel_now_inactive", lang, name=name)}
 
 
 class SettingsRequest(BaseModel):
     max_items_per_list: Optional[int] = None
     max_playlist_length: Optional[int] = None
     audio_channels: Optional[int] = None
+    language: Optional[str] = None
+    skin: Optional[str] = None
 
 
 @router.post("/settings")
 def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
     """Each field is optional so the Setup page's cards can save
     independently without one field's save resetting the others."""
+    lang, _skin = _lang_skin(db)  # current language, used for validation messages
     fields = {}
     messages = []
 
     if payload.max_items_per_list is not None:
         if not (1 <= payload.max_items_per_list <= 500):
-            return {"ok": False, "message": "Bitte eine Zahl zwischen 1 und 500 eingeben."}
+            return {"ok": False, "message": i18n.t("api.number_range_error", lang)}
         fields["max_items_per_list"] = payload.max_items_per_list
-        messages.append(f"bis zu {payload.max_items_per_list} Folgen pro Liste werden geladen")
+        messages.append(i18n.t("api.max_items_saved", lang, n=payload.max_items_per_list))
 
     if payload.max_playlist_length is not None:
         if not (1 <= payload.max_playlist_length <= 500):
-            return {"ok": False, "message": "Bitte eine Zahl zwischen 1 und 500 eingeben."}
+            return {"ok": False, "message": i18n.t("api.number_range_error", lang)}
         fields["max_playlist_length"] = payload.max_playlist_length
-        messages.append(f"max. {payload.max_playlist_length} Folgen werden je Kanal behalten")
+        messages.append(i18n.t("api.max_length_saved", lang, n=payload.max_playlist_length))
 
     if payload.audio_channels is not None:
         if payload.audio_channels not in (1, 2):
-            return {"ok": False, "message": "Bitte Mono oder Stereo wählen."}
+            return {"ok": False, "message": i18n.t("api.choose_mono_stereo", lang)}
         fields["audio_channels"] = payload.audio_channels
         # Only future downloads/reprocessing pick this up — existing MP3s on
         # disk keep whatever channel count they were originally encoded with.
-        label = "Mono" if payload.audio_channels == 1 else "Stereo"
-        messages.append(f"neue Downloads werden ab jetzt in {label} umgewandelt")
+        label = i18n.t("setup.audio_mono", lang) if payload.audio_channels == 1 else i18n.t("setup.audio_stereo", lang)
+        messages.append(i18n.t("api.audio_channels_saved", lang, label=label))
+
+    if payload.language is not None:
+        if payload.language not in i18n.LANGS:
+            return {"ok": False, "message": i18n.t("api.choose_language", lang)}
+        fields["language"] = payload.language
+        # Confirmation shown in the newly-selected language, not the old one
+        # — immediate proof the switch worked, right before the page reloads.
+        new_lang = payload.language
+        label = i18n.t("setup.language_de", new_lang) if new_lang == "de" else i18n.t("setup.language_en", new_lang)
+        messages.append(i18n.t("api.language_saved", new_lang, label=label))
+
+    if payload.skin is not None:
+        if payload.skin not in ("colors", "numbers"):
+            return {"ok": False, "message": i18n.t("api.choose_skin", lang)}
+        fields["skin"] = payload.skin
+        messages.append(
+            i18n.t("api.skin_saved_colors", lang) if payload.skin == "colors"
+            else i18n.t("api.skin_saved_numbers", lang)
+        )
 
     if not fields:
-        return {"ok": False, "message": "Nichts zu speichern."}
+        return {"ok": False, "message": i18n.t("api.nothing_to_save", lang)}
 
     crud.update_settings(db, **fields)
-    return {"ok": True, "message": "Gespeichert – " + ", ".join(messages) + "."}
+    # If the language itself just changed, the combined summary line below
+    # should read in the new language too (matches the per-field message
+    # above, and it's what the user is about to see after the reload).
+    summary_lang = payload.language if payload.language is not None else lang
+    return {"ok": True, "message": i18n.t("api.saved_prefix", summary_lang, details=", ".join(messages))}
 
 
 class SDExportRequest(BaseModel):
@@ -744,6 +814,7 @@ class SDExportRequest(BaseModel):
 
 @router.post("/sd-export")
 def sd_export_endpoint(payload: SDExportRequest, db: Session = Depends(get_db)):
+    lang, _skin = _lang_skin(db)
     try:
         result = sd_export.export_to_sd(db, payload.path)
         return result
@@ -751,9 +822,7 @@ def sd_export_endpoint(payload: SDExportRequest, db: Session = Depends(get_db)):
         return {"ok": False, "message": str(exc)}
     except Exception as exc:  # noqa: BLE001
         logger.error("sd export failed: %s", exc)
-        return {"ok": False,
-                "message": "Das Schreiben auf die Karte ging nicht. "
-                           "→ Karte neu einstecken und erneut tippen."}
+        return {"ok": False, "message": i18n.t("api.sd_write_failed", lang)}
 
 
 @router.get("/sd-export/zip")
@@ -766,6 +835,7 @@ def sd_export_zip(db: Session = Depends(get_db)):
     rather than held in memory, since the whole library can run into the
     hundreds of MB.
     """
+    lang, _skin = _lang_skin(db)
     fd, tmp_path = tempfile.mkstemp(suffix=".zip")
     os.close(fd)
     try:
@@ -773,7 +843,7 @@ def sd_export_zip(db: Session = Depends(get_db)):
     except Exception as exc:  # noqa: BLE001
         os.unlink(tmp_path)
         logger.error("sd export zip failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Die ZIP-Datei konnte nicht erstellt werden.") from exc
+        raise HTTPException(status_code=500, detail=i18n.t("api.zip_failed", lang)) from exc
     return FileResponse(
         tmp_path,
         media_type="application/zip",
@@ -785,17 +855,18 @@ def sd_export_zip(db: Session = Depends(get_db)):
 @router.delete("/audio/{channel_id}/{filename}")
 def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_db)):
     """Delete a single audio file from a channel."""
+    lang, _skin = _lang_skin(db)
     channel = crud.get_channel(db, channel_id)
     if channel is None:
-        raise HTTPException(status_code=404, detail="Kanal nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found_short", lang))
 
     # Security: prevent path traversal
     if "/" in filename or ".." in filename or filename.startswith("_"):
-        raise HTTPException(status_code=400, detail="Ungültiger Dateiname.")
+        raise HTTPException(status_code=400, detail=i18n.t("api.invalid_filename", lang))
 
     file_path = config.AUDIO_DIR / str(channel_id) / filename
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.file_not_found", lang))
 
     try:
         file_path.unlink()
@@ -805,17 +876,18 @@ def delete_audio_file(channel_id: int, filename: str, db: Session = Depends(get_
             if item.filename == filename:
                 crud.delete_item(db, item.id)
                 break
-        return {"ok": True, "message": "Datei gelöscht."}
+        return {"ok": True, "message": i18n.t("api.file_deleted", lang)}
     except Exception as exc:  # noqa: BLE001
         logger.error("delete file failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Löschen fehlgeschlagen.") from exc
+        raise HTTPException(status_code=500, detail=i18n.t("api.delete_failed", lang)) from exc
 
 
 @router.post("/cookies-upload")
-async def upload_cookies(file: UploadFile = File(...)):
+async def upload_cookies(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Accept a cookies.txt upload and save it to the data directory."""
+    lang, _skin = _lang_skin(db)
     if not file.filename:
-        raise HTTPException(status_code=400, detail="Keine Datei übermittelt.")
+        raise HTTPException(status_code=400, detail=i18n.t("api.no_file_uploaded", lang))
 
     # Basic sanity check: must look like a Netscape cookies file.
     first_bytes = await file.read(64)
@@ -825,7 +897,7 @@ async def upload_cookies(file: UploadFile = File(...)):
         # Only reject obviously wrong types (e.g. images, ZIPs).
         if first_bytes[:4] in (b"\x89PNG", b"\xff\xd8\xff", b"PK\x03\x04"):
             raise HTTPException(status_code=400,
-                                detail="Das ist keine Cookies-Datei.")
+                                detail=i18n.t("api.not_a_cookies_file", lang))
 
     # DB_DIR (/data/db), not DATA_DIR (/data) — see downloader._cookies_path()
     # for why: only DB_DIR is an actual persistent volume mount, so a plain
@@ -837,19 +909,20 @@ async def upload_cookies(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, fh)
     except Exception as exc:
         logger.error("cookies upload failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Speichern fehlgeschlagen.") from exc
+        raise HTTPException(status_code=500, detail=i18n.t("api.save_failed", lang)) from exc
 
     size = dest.stat().st_size
     logger.info("cookies.txt uploaded, %d bytes", size)
-    return {"ok": True, "message": "YouTube-Zugang gespeichert ✓", "bytes": size}
+    return {"ok": True, "message": i18n.t("api.youtube_access_saved", lang), "bytes": size}
 
 
 @router.delete("/audio/{channel_id}")
 def delete_all_audio_files(channel_id: int, request: Request, db: Session = Depends(get_db)):
     """Delete all audio files from a channel."""
+    lang, _skin = _lang_skin(db)
     channel = crud.get_channel(db, channel_id)
     if channel is None:
-        raise HTTPException(status_code=404, detail="Kanal nicht gefunden.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found_short", lang))
 
     channel_dir = config.AUDIO_DIR / str(channel_id)
     deleted = 0
@@ -878,4 +951,5 @@ def delete_all_audio_files(channel_id: int, request: Request, db: Session = Depe
     except Exception:  # noqa: BLE001
         pass
 
-    return {"ok": True, "message": f"{deleted} Dateien gelöscht.", "count": deleted}
+    message = i18n.t("api.files_deleted", lang, count=deleted, s="" if deleted == 1 else "s")
+    return {"ok": True, "message": message, "count": deleted}

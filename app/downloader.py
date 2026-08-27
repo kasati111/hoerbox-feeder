@@ -12,6 +12,8 @@ from typing import List, Optional
 
 import yt_dlp
 
+from . import i18n
+
 logger = logging.getLogger("hoerbox.downloader")
 
 
@@ -193,7 +195,7 @@ def _get_spotdl():
     return _spotdl_instance
 
 
-def _resolve_spotify(spotify_url: str) -> "SourceInfo":
+def _resolve_spotify(spotify_url: str, lang: str = "de") -> "SourceInfo":
     """Resolve a Spotify URL to a SourceInfo by using spotdl for metadata.
 
     spotdl is used **only** to query the Spotify API (track name, artist,
@@ -230,7 +232,7 @@ def _resolve_spotify(spotify_url: str) -> "SourceInfo":
     entries: List[SourceEntry] = []
     for song in songs:
         artist = getattr(song, "artist", "") or ""
-        name = getattr(song, "name", "") or "Ohne Titel"
+        name = getattr(song, "name", "") or i18n.t("title.untitled", lang)
         query = f"{artist} - {name}" if artist else name
         # Use yt-dlp's native YouTube search extractor.
         # download_audio() calls _base_ydl_opts() which provides cookies
@@ -263,14 +265,14 @@ def _classify(info: dict, url: str) -> str:
     return "single"
 
 
-def analyze(url: str) -> SourceInfo:
+def analyze(url: str, lang: str = "de") -> SourceInfo:
     """Analyse a URL and expand playlists into individual entries.
 
     Spotify URLs are resolved via spotdl (metadata only); all other URLs go
     through yt-dlp's flat extraction.
     """
     if _is_spotify(url):
-        return _resolve_spotify(_normalize_spotify_url(url))
+        return _resolve_spotify(_normalize_spotify_url(url), lang)
 
     opts = _base_ydl_opts()
     opts["extract_flat"] = "in_playlist"
@@ -295,7 +297,7 @@ def analyze(url: str) -> SourceInfo:
             entries.append(
                 SourceEntry(
                     url=entry_url,
-                    title=entry.get("title") or "Ohne Titel",
+                    title=entry.get("title") or i18n.t("title.untitled", lang),
                 )
             )
         is_series = True
@@ -304,7 +306,7 @@ def analyze(url: str) -> SourceInfo:
         entries.append(
             SourceEntry(
                 url=info.get("webpage_url") or url,
-                title=info.get("title") or "Ohne Titel",
+                title=info.get("title") or i18n.t("title.untitled", lang),
             )
         )
         is_series = False
@@ -349,7 +351,7 @@ def resolve_real_title(url: Optional[str]) -> Optional[str]:
     return None if is_placeholder_title(title) else title
 
 
-def search_candidates(query: str, limit: int = 5) -> List[SearchCandidate]:
+def search_candidates(query: str, limit: int = 5, lang: str = "de") -> List[SearchCandidate]:
     """Search YouTube for *query* and return up to *limit* lightweight
     candidates (title/uploader/duration/thumbnail, no per-candidate
     download) for a human to visually pick from — the manual, verifiable
@@ -382,7 +384,7 @@ def search_candidates(query: str, limit: int = 5) -> List[SearchCandidate]:
         duration = entry.get("duration")
         candidates.append(SearchCandidate(
             url=url,
-            title=entry.get("title") or "Ohne Titel",
+            title=entry.get("title") or i18n.t("title.untitled", lang),
             uploader=entry.get("uploader") or entry.get("channel"),
             duration_seconds=int(duration) if duration else None,
             thumbnail_url=thumbnail_url,
@@ -456,7 +458,7 @@ def _try_download(url: str, opts: dict, dest_dir: Path):
 
 
 def download_audio(
-    url: str, dest_dir: Path, progress_hook=None
+    url: str, dest_dir: Path, progress_hook=None, lang: str = "de"
 ) -> DownloadResult:
     """Download the best audio stream to a temporary file in dest_dir.
 
@@ -560,7 +562,7 @@ def download_audio(
 
     return DownloadResult(
         audio_path=audio_path,
-        title=info.get("title") or "Ohne Titel",
+        title=info.get("title") or i18n.t("title.untitled", lang),
         duration_seconds=int(info["duration"]) if info.get("duration") else None,
         thumbnail_path=thumb_path,
     )

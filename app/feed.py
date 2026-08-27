@@ -11,7 +11,7 @@ from typing import Optional
 from feedgen.feed import FeedGenerator
 from sqlalchemy.orm import Session
 
-from . import config, crud
+from . import config, crud, i18n
 
 
 def stable_guid(source_url: str) -> str:
@@ -34,18 +34,20 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
     base_url e.g. "http://192.168.1.50:8080" (no trailing slash).
     """
     base_url = base_url.rstrip("/")
+    settings = crud.get_settings(db)
+    lang, skin = settings.language, settings.skin
     channel = crud.get_channel(db, channel_id)
-    ch_name = channel.name if channel else str(channel_id)
+    ch_name = i18n.channel_label(channel, lang, skin) if channel else str(channel_id)
 
     fg = FeedGenerator()
     fg.load_extension("podcast")
-    fg.title(f"hoerbox-feeder – {ch_name}")
+    fg.title(i18n.t("feed.channel_title", lang, name=ch_name))
     fg.link(href=f"{base_url}/feed/{channel_id}.xml", rel="self")
-    fg.description(f"hoerbox-feeder Kanal {channel_id}")
-    fg.language("de")
+    fg.description(i18n.t("feed.channel_description", lang, id=channel_id))
+    fg.language(lang)
 
     cover_url = f"{base_url}/static/cover.png"
-    fg.image(url=cover_url, title=f"hoerbox-feeder – {ch_name}", link=base_url)
+    fg.image(url=cover_url, title=i18n.t("feed.channel_title", lang, name=ch_name), link=base_url)
     fg.podcast.itunes_image(cover_url)
 
     items = crud.list_done_items(db, channel_id)

@@ -9,7 +9,7 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from . import audio, config, crud, downloader
+from . import audio, config, crud, downloader, i18n
 from .database import session_scope
 from .models import Job
 
@@ -49,6 +49,11 @@ def disk_usage_summary(path: Path = None) -> dict:
         "free_mb": usage.free // (1024 * 1024),
         "percent": percent,
     }
+
+
+def _lang_skin(db) -> tuple:
+    settings = crud.get_settings(db)
+    return settings.language, settings.skin
 
 
 def channel_with_most_items(db) -> int:
@@ -109,12 +114,14 @@ def _touch_job(job_id: int) -> None:
 def process_job(job_id: int) -> None:
     """Process a single job end to end."""
     with session_scope() as db:
+        settings = crud.get_settings(db)
+        lang, skin = settings.language, settings.skin
         job = crud.get_job(db, job_id)
         if job is None or job.item_id is None:
             return
         item = crud.get_item(db, job.item_id)
         if item is None:
-            crud.update_job(db, job_id, status="failed", error_text="Eintrag fehlt")
+            crud.update_job(db, job_id, status="failed", error_text=i18n.t("worker.entry_missing", lang))
             return
         item_id = item.id
         channel_id = item.channel_id
@@ -125,15 +132,17 @@ def process_job(job_id: int) -> None:
         sort_index = item.sort_index
         attempt_count = job.attempt_count or 1
         channel = crud.get_channel(db, channel_id)
-        channel_name = channel.name if channel else str(channel_id)
-        audio_channels = crud.get_settings(db).audio_channels
+        channel_name = i18n.channel_label(channel, lang, skin) if channel else str(channel_id)
+        audio_channels = settings.audio_channels
 
     # Storage guard before doing heavy work.
     if not storage_ok():
         with session_scope() as db:
+            lang, skin = _lang_skin(db)
             tidy = channel_with_most_items(db)
-            tidy_name = crud.get_channel(db, tidy).name if crud.get_channel(db, tidy) else str(tidy)
-            msg = f"Kein Platz mehr. → Räume den Kanal „{tidy_name}“ auf."
+            tidy_channel = crud.get_channel(db, tidy)
+            tidy_name = i18n.channel_label(tidy_channel, lang, skin) if tidy_channel else str(tidy)
+            msg = i18n.t("worker.no_space", lang, name=tidy_name)
             crud.update_job(db, job_id, status="failed", error_text=msg, progress=0)
             crud.update_item(db, item_id, status="failed", error_text=msg)
         return
@@ -145,7 +154,7 @@ def process_job(job_id: int) -> None:
     tmp_dir = config.AUDIO_DIR / str(channel_id) / "_tmp"
     try:
         result = downloader.download_audio(
-            source_url, tmp_dir, progress_hook=_progress_hook_factory(job_id)
+            source_url, tmp_dir, progress_hook=_progress_hook_factory(job_id), lang=lang
         )
 
         # Download done – ffmpeg conversion starts now.
@@ -230,8 +239,9 @@ def _ensure_real_title(db, item) -> str:
 
 
 def handle_failure(job_id: int, item_id: int, attempt_count: int, error: str) -> None:
-    user_msg = f"Ging nicht: {error}"
     with session_scope() as db:
+        lang, _skin = _lang_skin(db)
+        user_msg = i18n.t("worker.failed_prefix", lang, error=error)
         item = crud.get_item(db, item_id)
         title = _ensure_real_title(db, item) if item is not None else None
         if attempt_count >= config.MAX_ATTEMPTS:
@@ -239,7 +249,7 @@ def handle_failure(job_id: int, item_id: int, attempt_count: int, error: str) ->
                 # Never got an escalation attempt below (no real title to
                 # search with) — say so explicitly instead of leaving the
                 # user staring at a generic failure with no path forward.
-                user_msg += " Kein Titel bekannt – bitte „Selbst suchen“ verwenden."
+                user_msg += i18n.t("worker.no_title_use_search", lang)
             # next_attempt_at must be cleared here, not just left stale from
             # the last backoff round — is_backoff (ui.py._item_view) keys off
             # "next_attempt_at is still in the future", not job.status, so a
@@ -311,6 +321,7 @@ def check_stuck_jobs() -> int:
     """
     cutoff = datetime.utcnow() - timedelta(minutes=STUCK_JOB_TIMEOUT_MINUTES)
     with session_scope() as db:
+        lang, _skin = _lang_skin(db)
         stuck = (
             db.query(Job)
             .filter(Job.status == "running", Job.updated_at < cutoff)
@@ -320,7 +331,7 @@ def check_stuck_jobs() -> int:
 
     for job_id, item_id, attempt_count in stuck_info:
         logger.warning("stuck job detected job_id=%s item_id=%s, resetting", job_id, item_id)
-        handle_failure(job_id, item_id, attempt_count, "Hat zu lange nicht reagiert.")
+        handle_failure(job_id, item_id, attempt_count, i18n.t("worker.did_not_respond", lang))
 
     return len(stuck_info)
 

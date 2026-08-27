@@ -1,5 +1,6 @@
 """HTML routes: GET /, GET /kanal/{n}, GET /einrichtung."""
 import base64
+import json
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
@@ -8,9 +9,10 @@ import qrcode
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from sqlalchemy.orm import Session
 
-from .. import config, crud, downloader, worker
+from .. import config, crud, downloader, i18n, worker
 from ..database import get_db
 from ..downloader import _cookies_path
 from ..models import Subscription
@@ -19,21 +21,52 @@ router = APIRouter()
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent.parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+# For embedding a translated string as a JS string literal inline in a
+# <script> block (e.g. `msg.textContent = {{ t('x') | js }};`) -- Jinja's
+# default HTML-autoescaping would otherwise mangle the JSON-encoded quotes
+# (") into HTML entities (&#34;), breaking the JS syntax. Markup(...) marks
+# the already-JSON-safe output so autoescape leaves it alone, same as `|safe`
+# but built into the filter so every call site doesn't have to remember it.
+templates.env.filters["js"] = lambda s: Markup(json.dumps(s, ensure_ascii=False))
 
 
-def _footer_context():
+def _base_context(db: Session) -> dict:
+    """Shared template context: language/skin from the live Settings row,
+    plus the `t()` translation function and channel-display helpers bound to
+    them, so templates never have to thread lang/skin through themselves."""
+    settings = crud.get_settings(db)
+    lang = settings.language
+    skin = settings.skin
     return {
-        "legal_notice": config.LEGAL_NOTICE,
+        "lang": lang,
+        "skin": skin,
+        "t": lambda key, **kwargs: i18n.t(key, lang, **kwargs),
+        "channel_label": lambda ch: i18n.channel_label(ch, lang, skin),
+        "channel_color_hex": lambda ch: i18n.channel_color_hex(ch, skin),
+        "legal_notice": i18n.t("legal_notice", lang),
+        # Small js.*-prefixed subset embedded as JSON for static/app.js —
+        # not the whole STRINGS table, just what the client actually needs.
+        # Pre-serialized here (not via a Jinja `tojson` filter, whose
+        # availability isn't guaranteed on a plain Jinja2Templates env) and
+        # marked `|safe` in base.html.
+        "js_i18n_json": json.dumps(
+            {
+                key.removeprefix("js."): entry.get(lang) or entry.get(i18n.DEFAULT_LANG)
+                for key, entry in i18n.STRINGS.items()
+                if key.startswith("js.")
+            },
+            ensure_ascii=False,
+        ),
     }
 
 
-def _fmt_playtime(seconds: int) -> str:
+def _fmt_playtime(seconds: int, lang: str) -> str:
     seconds = seconds or 0
     h = seconds // 3600
     m = (seconds % 3600) // 60
     if h:
-        return f"{h} Std. {m} Min."
-    return f"{m} Min."
+        return i18n.t("playtime.hours_minutes", lang, h=h, m=m)
+    return i18n.t("playtime.minutes_only", lang, m=m)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -70,12 +103,12 @@ def index(request: Request, db: Session = Depends(get_db)):
             if len(unreviewed_items) == 1
             else None
         ),
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "index.html", ctx)
 
 
-def _item_view(item, jobs_by_item, is_sub: bool, channel_id: int = None, context_title: str = None) -> dict:
+def _item_view(item, jobs_by_item, is_sub: bool, lang: str, channel_id: int = None, context_title: str = None) -> dict:
     job = jobs_by_item.get(item.id)
     next_attempt_str = None
     if job and job.next_attempt_at and job.next_attempt_at > datetime.utcnow():
@@ -87,7 +120,7 @@ def _item_view(item, jobs_by_item, is_sub: bool, channel_id: int = None, context
         "title": item.title,
         "filename": item.filename,
         "channel_id": channel_id if channel_id is not None else item.channel_id,
-        "playtime": _fmt_playtime(item.duration_seconds),
+        "playtime": _fmt_playtime(item.duration_seconds, lang),
         "status": item.status,
         "error_text": item.error_text,
         "is_backoff": bool(next_attempt_str),
@@ -107,9 +140,10 @@ def _item_view(item, jobs_by_item, is_sub: bool, channel_id: int = None, context
 
 @router.get("/kanal/{n}", response_class=HTMLResponse)
 def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
+    lang = crud.get_settings(db).language
     channel = crud.get_channel(db, n)
     if channel is None:
-        raise HTTPException(status_code=404, detail="Diesen Knopf gibt es nicht.")
+        raise HTTPException(status_code=404, detail=i18n.t("api.channel_not_found", lang))
     items = crud.list_active_items(db, n)
     total_seconds = sum((i.duration_seconds or 0) for i in items if i.status == "done")
     subs = crud.list_subscriptions(db, n)
@@ -131,15 +165,19 @@ def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
         if (blocks and item.subscription_id is not None
                 and blocks[-1]["subscription_id"] == item.subscription_id):
             blocks[-1]["entries"].append(
-                _item_view(item, jobs_by_item, is_sub=True, channel_id=n, context_title=context_title)
+                _item_view(item, jobs_by_item, is_sub=True, lang=lang, channel_id=n, context_title=context_title)
             )
         else:
             is_block = item.subscription_id is not None
+            entry_view = _item_view(
+                item, jobs_by_item, is_sub=is_block, lang=lang,
+                channel_id=n, context_title=context_title,
+            )
             blocks.append({
                 "subscription_id": item.subscription_id,
                 "is_block": is_block,
                 "title": (sub_titles.get(item.subscription_id) or item.title) if is_block else None,
-                "entries": [_item_view(item, jobs_by_item, is_sub=is_block, channel_id=n, context_title=context_title)],
+                "entries": [entry_view],
             })
 
     ctx = {
@@ -147,10 +185,10 @@ def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
         "channel": channel,
         "blocks": blocks,
         "all_channels": crud.list_channels(db),
-        "total_playtime": _fmt_playtime(total_seconds),
+        "total_playtime": _fmt_playtime(total_seconds, lang),
         "abo_enabled": abo_enabled,
         "has_abo": has_abo,
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "channel.html", ctx)
 
@@ -185,7 +223,7 @@ def setup(request: Request, db: Session = Depends(get_db)):
         "max_items_per_list": crud.get_settings(db).max_items_per_list,
         "max_playlist_length": crud.get_settings(db).max_playlist_length,
         "audio_channels": crud.get_settings(db).audio_channels,
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "setup.html", ctx)
 
@@ -199,7 +237,7 @@ def bearbeiten(request: Request, db: Session = Depends(get_db)):
         "channels": channels,
         "problem_channels": crud.channels_with_problems(db),
         "unreviewed_channels": crud.channels_with_unreviewed_alts(db),
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "bearbeiten.html", ctx)
 
@@ -244,7 +282,7 @@ def belegung(request: Request, db: Session = Depends(get_db)):
         "total_files": sum(ch["file_count"] for ch in channels_data),
         "disk": worker.disk_usage_summary(),
         "storage_warn_mb": config.STORAGE_WARN_MB,
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "belegung.html", ctx)
 
@@ -289,13 +327,13 @@ def library_page(request: Request, db: Session = Depends(get_db)):
         "request": request,
         "groups": groups,
         "all_channels": crud.list_channels(db),
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "bibliothek.html", ctx)
 
 
 @router.get("/logs", response_class=HTMLResponse)
-def logs_page(request: Request, lines: int = 300):
+def logs_page(request: Request, lines: int = 300, db: Session = Depends(get_db)):
     """Recent app log lines, for debugging without needing SSH access.
 
     Reads the same rotating file the app itself logs to (see main.py) —
@@ -313,6 +351,6 @@ def logs_page(request: Request, lines: int = 300):
         "request": request,
         "content": content,
         "lines": lines,
-        **_footer_context(),
+        **_base_context(db),
     }
     return templates.TemplateResponse(request, "logs.html", ctx)

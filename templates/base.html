@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="{{ lang }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -24,12 +24,12 @@
     <header class="topbar">
         <a href="/" class="logo">hoerbox-feeder</a>
         <nav>
-            <a href="/">Start</a>
-            <a href="/belegung">Belegung</a>
-            <a href="/bearbeiten">Bearbeiten</a>
-            <a href="/bibliothek">Bibliothek</a>
-            <a href="/einrichtung">Setup</a>
-            <a href="/logs">Logs</a>
+            <a href="/">{{ t('nav.start') }}</a>
+            <a href="/belegung">{{ t('nav.belegung') }}</a>
+            <a href="/bearbeiten">{{ t('nav.bearbeiten') }}</a>
+            <a href="/bibliothek">{{ t('nav.bibliothek') }}</a>
+            <a href="/einrichtung">{{ t('nav.setup') }}</a>
+            <a href="/logs">{{ t('nav.logs') }}</a>
         </nav>
     </header>
 
@@ -41,6 +41,10 @@
         <p class="legal">{{ legal_notice }}</p>
     </footer>
 
+    <script>
+        window.HOERBOX_LANG = "{{ lang }}";
+        window.HOERBOX_I18N = {{ js_i18n_json | safe }};
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

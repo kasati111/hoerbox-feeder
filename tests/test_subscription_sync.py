@@ -24,7 +24,7 @@ def patched(db, monkeypatch):
 
 def _set_source(monkeypatch, entries):
     info = SourceInfo(kind="podcast", is_series=True, entries=entries)
-    monkeypatch.setattr(scheduler.downloader, "analyze", lambda url: info)
+    monkeypatch.setattr(scheduler.downloader, "analyze", lambda url, lang="de": info)
 
 
 def test_new_entries_are_queued(db, patched):

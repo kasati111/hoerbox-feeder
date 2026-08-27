@@ -1,61 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Belegung{% endblock %}
+{% block title %}{{ t('belegung.title') }}{% endblock %}
 
 {% block content %}
 <section class="belegung-page">
-    <h1>Belegung der Knöpfe</h1>
-    <p class="hint">Übersicht über alle gespeicherten Dateien</p>
+    <h1>{{ t('belegung.h1') }}</h1>
+    <p class="hint">{{ t('belegung.hint') }}</p>
 
     <div class="disk-bar-wrap">
         <div class="disk-bar-fill{% if disk.free_mb < storage_warn_mb %} low{% endif %}"
              style="width: {{ disk.percent }}%;"></div>
     </div>
     <p class="disk-bar-label">
-        {{ disk.used_mb }} MB von {{ (disk.total_mb / 1024) | round(1) }} GB belegt
-        ({{ disk.free_mb }} MB frei)
+        {{ t('belegung.disk_label', used=disk.used_mb, total=((disk.total_mb / 1024) | round(1)), free=disk.free_mb) }}
     </p>
 
     {% if total_files > 0 %}
-    <a href="/api/sd-export/zip" class="export-btn">⬇ Für SD-Karte herunterladen</a>
-    <p class="hint export-hint">Lädt alle {{ total_files }} Titel als ZIP-Datei herunter, sortiert
-        in Ordner 0–8. Entpacken und den Inhalt auf die Speicherkarte kopieren.</p>
+    <a href="/api/sd-export/zip" class="export-btn">{{ t('belegung.sd_export') }}</a>
+    <p class="hint export-hint">{{ t('belegung.sd_export_hint', count=total_files) }}</p>
     {% endif %}
 
     {% for ch in channels %}
-    <div class="belegung-card {{ 'inactive' if not ch.channel.active }}" style="--btn-color: {{ ch.channel.color_hex }};">
+    <div class="belegung-card {{ 'inactive' if not ch.channel.active }}" style="--btn-color: {{ channel_color_hex(ch.channel) }};">
         <div class="belegung-head">
             <span class="dot"></span>
-            <h2>{{ ch.channel.name }}</h2>
-            {% if not ch.channel.active %}<span class="muted-chip">inaktiv</span>{% endif %}
+            <h2>{{ channel_label(ch.channel) }}</h2>
+            {% if not ch.channel.active %}<span class="muted-chip">{{ t('common.inactive') }}</span>{% endif %}
             <span class="count">({{ ch.file_count }} Dateien, {{ ch.total_size_mb }} MB)</span>
         </div>
-        
+
         {% if ch.files %}
         <ul class="file-list">
             {% for file in ch.files %}
             <li class="file-item">
-                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ ch.channel.id }}/{{ file.filename | urlencode }}" title="Abspielen">▶</button>
+                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ ch.channel.id }}/{{ file.filename | urlencode }}" title="{{ t('common.play') }}">▶</button>
                 <span class="file-name">{{ file.filename }}</span>
                 <span class="file-size">{{ file.size_mb }} MB</span>
                 <button type="button" class="del-file-btn"
                         data-channel="{{ ch.channel.id }}"
                         data-filename="{{ file.filename }}"
-                        title="Löschen">✕</button>
+                        title="{{ t('belegung.delete_title') }}">✕</button>
             </li>
             {% endfor %}
         </ul>
         {% if ch.file_count > 0 %}
         <button type="button" class="delete-all-btn" data-channel="{{ ch.channel.id }}">
-            Alle löschen ({{ ch.channel.name }})
+            {{ t('belegung.delete_all_named', name=channel_label(ch.channel)) }}
         </button>
         {% endif %}
         {% else %}
-        <p class="empty-channel">Keine Dateien</p>
+        <p class="empty-channel">{{ t('belegung.no_files') }}</p>
         {% endif %}
     </div>
     {% endfor %}
 
-    <a href="/" class="back-link">← Zurück</a>
+    <a href="/" class="back-link">{{ t('common.back') }}</a>
 </section>
 
 <div id="toast" class="toast" hidden></div>

@@ -7,7 +7,7 @@
    viewport the moment the panel opened. A plain block div is always simply
    100% of its parent's content box, no flex math involved. #}
 <div class="item-row">
-<span class="{{ 'inner-handle' if item.is_sub else 'outer-handle' }}" title="Verschieben">≡</span>
+<span class="{{ 'inner-handle' if item.is_sub else 'outer-handle' }}" title="{{ t('item.handle_title') }}">≡</span>
 <div class="item-main">
     <span class="item-title">{{ item.title }}</span>
     {% if item.needs_alt_review %}
@@ -16,48 +16,48 @@
        'done'), since a blind substitute can be playable and simply wrong;
        this is the only place that ever surfaces that without checking the
        database directly. #}
-    <span class="warn-chip alt-review-chip" title="Wurde automatisch über eine Ersatzsuche gefunden, noch nicht geprüft">⟳ andere Quelle – bitte prüfen</span>
+    <span class="warn-chip alt-review-chip" title="{{ t('item.alt_review_title') }}">{{ t('item.alt_review_chip') }}</span>
     {% endif %}
     {% if item.filename %}<span class="item-filename">{{ item.filename }}</span>{% endif %}
 </div>
 {% if item.status == 'done' %}
 <span class="item-time">{{ item.playtime }}</span>
 {% if item.filename %}
-<button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel_id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+<button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel_id }}/{{ item.filename | urlencode }}" title="{{ t('common.play') }}">▶</button>
 {% endif %}
 {% if item.needs_alt_review %}
 <div class="item-alt-actions">
-    <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">Selbst suchen</button>
-    <button type="button" class="ghost-btn confirm-alt-btn" data-id="{{ item.id }}" title="Inhalt passt, Hinweis entfernen">✓ passt</button>
+    <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">{{ t('item.search_self') }}</button>
+    <button type="button" class="ghost-btn confirm-alt-btn" data-id="{{ item.id }}" title="{{ t('item.confirm_alt_title') }}">{{ t('item.confirm_alt') }}</button>
 </div>
 {% endif %}
 {% elif item.error_text %}
 <div class="item-error">
     <span class="failed" title="{{ item.error_text }}">{{ item.error_text }}</span>
-    {% if item.is_backoff %}<span class="next-try">nächster Versuch automatisch um {{ item.next_attempt_str }} Uhr</span>{% endif %}
+    {% if item.is_backoff %}<span class="next-try">{{ t('item.next_try', time=item.next_attempt_str) }}</span>{% endif %}
     <div class="item-error-actions">
-        <button type="button" class="retry-now-btn" data-id="{{ item.id }}">Jetzt nochmal versuchen</button>
+        <button type="button" class="retry-now-btn" data-id="{{ item.id }}">{{ t('item.retry_now') }}</button>
         {% if item.is_backoff %}
         {# Once attempts are exhausted (no longer backing off), the pipeline
            has already automatically tried a different source itself (see
            worker.handle_failure) -- offering this again here would just be
            the same ytsearch1 query with the same likely result. #}
-        <button type="button" class="ghost-btn find-alt-btn" data-id="{{ item.id }}">Andere Quelle suchen</button>
+        <button type="button" class="ghost-btn find-alt-btn" data-id="{{ item.id }}">{{ t('item.find_alt') }}</button>
         {% endif %}
-        <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">Selbst suchen</button>
+        <button type="button" class="ghost-btn search-alt-btn" data-id="{{ item.id }}">{{ t('item.search_self') }}</button>
     </div>
 </div>
 {% else %}
-<span class="item-time">wird geladen …</span>
+<span class="item-time">{{ t('item.loading') }}</span>
 {% endif %}
-<button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+<button type="button" class="del-btn" data-id="{{ item.id }}" title="{{ t('item.delete_title') }}">✕</button>
 </div>
 
 {% if item.error_text or item.needs_alt_review %}
 <div class="alt-search-panel" data-id="{{ item.id }}" hidden>
     <div class="alt-search-input-row">
         <input type="text" class="alt-search-input" value="{{ item.search_hint }}">
-        <button type="button" class="alt-search-go-btn" data-id="{{ item.id }}">Suchen</button>
+        <button type="button" class="alt-search-go-btn" data-id="{{ item.id }}">{{ t('item.search_placeholder_title') }}</button>
     </div>
     <div class="alt-search-results" data-id="{{ item.id }}"></div>
 </div>

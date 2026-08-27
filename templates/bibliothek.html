@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Bibliothek{% endblock %}
+{% block title %}{{ t('bibliothek.title') }}{% endblock %}
 
 {% block content %}
 <section class="library-page">
-    <h1>Bibliothek</h1>
-    <p class="hint">Geparkte Titel und Playlists – liegen bereit, ohne einen Kanalplatz zu belegen.</p>
+    <h1>{{ t('bibliothek.h1') }}</h1>
+    <p class="hint">{{ t('bibliothek.hint') }}</p>
 
     {% if groups %}
     {% for g in groups %}
@@ -19,64 +19,64 @@
                are the common case here. #}
             <button type="button" class="block-toggle lib-block-toggle" aria-expanded="false">▸</button>
             <strong>{{ g.title }}</strong>
-            <span class="count">{{ g.entries|length }} Folgen</span>
+            <span class="count">{{ t('common.episodes', n=g.entries|length) }}</span>
         </div>
         <div class="library-actions">
             <select class="channel-select lib-block-channel-select" data-sub-id="{{ g.subscription_id }}">
-                <option value="">Auf Kanal legen…</option>
+                <option value="">{{ t('common.pick_channel') }}</option>
                 {% for ch in all_channels if ch.active %}
-                <option value="{{ ch.id }}">{{ ch.name }}</option>
+                <option value="{{ ch.id }}">{{ channel_label(ch) }}</option>
                 {% endfor %}
             </select>
-            <button type="button" class="ghost-btn move-btn lib-block-move-btn" data-sub-id="{{ g.subscription_id }}">Verschieben</button>
-            <button type="button" class="block-delete-btn" data-sub-id="{{ g.subscription_id }}">Löschen</button>
+            <button type="button" class="ghost-btn move-btn lib-block-move-btn" data-sub-id="{{ g.subscription_id }}">{{ t('common.move') }}</button>
+            <button type="button" class="block-delete-btn" data-sub-id="{{ g.subscription_id }}">{{ t('common.delete') }}</button>
         </div>
         <ul class="library-sub-list" hidden>
             {% for item in g.entries %}
-            <li class="library-item" data-id="{{ item.id }}" style="--btn-color: {{ item.channel.color_hex }};">
+            <li class="library-item" data-id="{{ item.id }}" style="--btn-color: {{ channel_color_hex(item.channel) }};">
                 <span class="dot"></span>
                 <span class="item-title">{{ item.title }}</span>
                 {% if item.filename %}
-                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="{{ t('common.play') }}">▶</button>
                 {% endif %}
                 <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
-                    <option value="">Auf Kanal legen…</option>
+                    <option value="">{{ t('common.pick_channel') }}</option>
                     {% for ch in all_channels if ch.active %}
-                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    <option value="{{ ch.id }}">{{ channel_label(ch) }}</option>
                     {% endfor %}
                 </select>
-                <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">Verschieben</button>
-                <button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+                <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">{{ t('common.move') }}</button>
+                <button type="button" class="del-btn" data-id="{{ item.id }}" title="{{ t('common.delete') }}">✕</button>
             </li>
             {% endfor %}
         </ul>
         {% else %}
         {% set item = g.entries[0] %}
-        <div class="library-card-head" style="--btn-color: {{ item.channel.color_hex }};">
+        <div class="library-card-head" style="--btn-color: {{ channel_color_hex(item.channel) }};">
             <span class="dot"></span>
             <strong>{{ item.title }}</strong>
             {% if item.filename %}
-            <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+            <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="{{ t('common.play') }}">▶</button>
             {% endif %}
         </div>
         <div class="library-actions" data-id="{{ item.id }}">
             <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
-                <option value="">Auf Kanal legen…</option>
+                <option value="">{{ t('common.pick_channel') }}</option>
                 {% for ch in all_channels if ch.active %}
-                <option value="{{ ch.id }}">{{ ch.name }}</option>
+                <option value="{{ ch.id }}">{{ channel_label(ch) }}</option>
                 {% endfor %}
             </select>
-            <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">Verschieben</button>
-            <button type="button" class="del-btn" data-id="{{ item.id }}" title="Löschen">✕</button>
+            <button type="button" class="ghost-btn move-btn lib-item-move-btn" data-id="{{ item.id }}">{{ t('common.move') }}</button>
+            <button type="button" class="del-btn" data-id="{{ item.id }}" title="{{ t('common.delete') }}">✕</button>
         </div>
         {% endif %}
     </div>
     {% endfor %}
     {% else %}
-    <p class="empty">Die Bibliothek ist leer.</p>
+    <p class="empty">{{ t('bibliothek.empty') }}</p>
     {% endif %}
 
-    <a href="/" class="back-link">← Zurück</a>
+    <a href="/" class="back-link">{{ t('common.back') }}</a>
 </section>
 
 <div id="toast" class="toast" hidden></div>

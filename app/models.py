@@ -111,3 +111,5 @@ class Settings(Base):
     max_items_per_list = Column(Integer, nullable=False)
     max_playlist_length = Column(Integer, nullable=False)  # aka retention: episodes kept per channel
     audio_channels = Column(Integer, nullable=False, default=1)  # 1 = mono, 2 = stereo
+    language = Column(String, nullable=False, default="de")  # "de" | "en"
+    skin = Column(String, nullable=False, default="colors")  # "colors" | "numbers"

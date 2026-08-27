@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Etwas hinzufügen{% endblock %}
+{% block title %}{{ t('index.title') }}{% endblock %}
 
 {% block content %}
 <section class="add-box">
-    <h1>Etwas hinzufügen</h1>
+    <h1>{{ t('index.h1') }}</h1>
 
-    <label for="url" class="field-label">Link einfügen</label>
+    <label for="url" class="field-label">{{ t('index.url_label') }}</label>
     <div class="url-wrap">
         <input type="text" id="url" name="url" class="url-input"
-               placeholder="Link einfügen – z.B. von YouTube, Spotify oder einem Podcast"
+               placeholder="{{ t('index.url_placeholder') }}"
                autocomplete="off">
-        <button type="button" id="paste-btn" class="paste-btn" title="Aus Zwischenablage einfügen">
+        <button type="button" id="paste-btn" class="paste-btn" title="{{ t('index.paste_title') }}">
             <!-- Clipboard-Icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -21,23 +21,23 @@
                 <line x1="9" y1="17" x2="12" y2="17"/>
             </svg>
         </button>
-        <button type="button" id="clear-url-btn" class="paste-btn clear-btn" title="Eingabe löschen">✕</button>
+        <button type="button" id="clear-url-btn" class="paste-btn clear-btn" title="{{ t('index.clear_title') }}">✕</button>
     </div>
 
-    <p class="field-label">Auf welchen Knopf?</p>
+    <p class="field-label">{{ t('index.channel_label') }}</p>
     <div class="color-grid" id="color-grid">
         {% for ch in channels %}
         <button type="button" class="color-btn {{ 'inactive' if not ch.active }}" data-channel="{{ ch.id }}"
                 {% if not ch.active %}disabled{% endif %}
-                style="--btn-color: {{ ch.color_hex }};">
+                style="--btn-color: {{ channel_color_hex(ch) }};">
             <span class="dot"></span>
-            <span class="name">{{ ch.name }}</span>
+            <span class="name">{{ channel_label(ch) }}</span>
             <span class="count-chip">{{ item_counts.get(ch.id, 0) }}</span>
         </button>
         {% endfor %}
     </div>
 
-    <button type="button" id="add-btn" class="add-btn" disabled>Hinzufügen</button>
+    <button type="button" id="add-btn" class="add-btn" disabled>{{ t('index.add_btn') }}</button>
 
     <div id="status" class="status" hidden>
         <p id="status-text"></p>
@@ -45,27 +45,27 @@
         <div class="progress-wrap" id="progress-wrap" hidden>
             <div class="progress-bar" id="progress-bar"></div>
         </div>
-        <button type="button" id="cancel-btn" class="cancel-btn" hidden>Abbrechen</button>
-        <button type="button" id="retry-btn" class="retry-btn" hidden>Nochmal versuchen</button>
-        <button type="button" id="delete-btn" hidden>Löschen</button>
+        <button type="button" id="cancel-btn" class="cancel-btn" hidden>{{ t('index.cancel_btn') }}</button>
+        <button type="button" id="retry-btn" class="retry-btn" hidden>{{ t('index.retry_btn') }}</button>
+        <button type="button" id="delete-btn" hidden>{{ t('index.delete_btn') }}</button>
     </div>
 </section>
 
 {% if problem_count %}
 <div id="failed-notice" class="failed-notice">
-    <button type="button" id="failed-notice-close" class="failed-notice-close" title="Ausblenden">✕</button>
+    <button type="button" id="failed-notice-close" class="failed-notice-close" title="{{ t('index.hide_title') }}">✕</button>
     {% if problem_item %}
-    <a href="/kanal/{{ problem_item.channel_id }}#item-{{ problem_item.id }}" class="notice-link"><strong>„{{ problem_item.title }}“ braucht Aufmerksamkeit{% if problem_item.hint %}: {{ problem_item.hint }}{% endif %}.</strong></a>
+    <a href="/kanal/{{ problem_item.channel_id }}#item-{{ problem_item.id }}" class="notice-link"><strong>{{ t('index.notice_needs_attention_one', title=problem_item.title, hint=(': ' + problem_item.hint if problem_item.hint else '')) }}</strong></a>
     {% else %}
-    <a href="/bearbeiten" class="notice-link"><strong>{{ problem_count }} Titel brauchen Aufmerksamkeit.</strong></a>
+    <a href="/bearbeiten" class="notice-link"><strong>{{ t('index.notice_needs_attention_many', count=problem_count) }}</strong></a>
     {% endif %}
     <div class="item-error-actions">
-        <button type="button" id="retry-all-btn" class="retry-now-btn">{{ 'Nochmal versuchen' if problem_item else 'Alle nochmal versuchen' }}</button>
-        <button type="button" id="find-alt-all-btn" class="ghost-btn">{{ 'Andere Quelle suchen' if problem_item else 'Für alle andere Quelle suchen' }}</button>
-        <button type="button" id="delete-all-btn" class="del-btn-wide">{{ 'Löschen' if problem_item else 'Alle löschen' }}</button>
+        <button type="button" id="retry-all-btn" class="retry-now-btn">{{ t('index.retry_now') if problem_item else t('index.retry_all') }}</button>
+        <button type="button" id="find-alt-all-btn" class="ghost-btn">{{ t('index.find_alt') if problem_item else t('index.find_alt_all') }}</button>
+        <button type="button" id="delete-all-btn" class="del-btn-wide">{{ t('index.delete_one') if problem_item else t('index.delete_all') }}</button>
     </div>
     {% if not problem_item %}
-    <p class="hint">Einzeln bearbeiten unter <a href="/bearbeiten">Bearbeiten</a>.</p>
+    <p class="hint">{{ t('index.edit_individually') | safe }}</p>
     {% endif %}
 </div>
 {% endif %}
@@ -76,12 +76,12 @@
    and never looked at by a human. Showing them in red would read as
    "broken" when the actual content might be perfectly fine. #}
 <div id="unreviewed-notice" class="unreviewed-notice">
-    <button type="button" id="unreviewed-notice-close" class="failed-notice-close" title="Ausblenden">✕</button>
+    <button type="button" id="unreviewed-notice-close" class="failed-notice-close" title="{{ t('index.hide_title') }}">✕</button>
     {% if unreviewed_item %}
-    <a href="/kanal/{{ unreviewed_item.channel_id }}#item-{{ unreviewed_item.id }}" class="notice-link"><strong>„{{ unreviewed_item.title }}“ wurde automatisch über eine Ersatzsuche gefunden und sollte geprüft werden.</strong></a>
+    <a href="/kanal/{{ unreviewed_item.channel_id }}#item-{{ unreviewed_item.id }}" class="notice-link"><strong>{{ t('index.unreviewed_one', title=unreviewed_item.title) }}</strong></a>
     {% else %}
-    <a href="/bearbeiten" class="notice-link"><strong>{{ unreviewed_count }} Titel wurden automatisch über eine Ersatzsuche gefunden und sollten geprüft werden.</strong></a>
-    <p class="hint">Einzeln prüfen unter <a href="/bearbeiten">Bearbeiten</a>.</p>
+    <a href="/bearbeiten" class="notice-link"><strong>{{ t('index.unreviewed_many', count=unreviewed_count) }}</strong></a>
+    <p class="hint">{{ t('index.review_individually') | safe }}</p>
     {% endif %}
 </div>
 {% endif %}
@@ -89,9 +89,9 @@
 <div id="evict-dialog" class="modal-overlay" hidden>
     <div class="modal-box">
         <p id="evict-message"></p>
-        <button type="button" id="evict-library-btn" class="add-btn">In Bibliothek verschieben</button>
-        <button type="button" id="evict-delete-btn" class="cancel-btn">Endgültig löschen</button>
-        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">Abbrechen</button>
+        <button type="button" id="evict-library-btn" class="add-btn">{{ t('index.evict_move') }}</button>
+        <button type="button" id="evict-delete-btn" class="cancel-btn">{{ t('index.evict_delete') }}</button>
+        <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">{{ t('common.cancel') }}</button>
     </div>
 </div>
 {% endblock %}

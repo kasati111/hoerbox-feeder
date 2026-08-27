@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}{{ channel.name }}{% endblock %}
+{% block title %}{{ channel_label(channel) }}{% endblock %}
 
 {% block content %}
 <section class="channel-page" data-channel="{{ channel.id }}">
-    <div class="channel-head" style="--btn-color: {{ channel.color_hex }};">
+    <div class="channel-head" style="--btn-color: {{ channel_color_hex(channel) }};">
         <span class="dot big"></span>
-        <h1>{{ channel.name }}</h1>
+        <h1>{{ channel_label(channel) }}</h1>
     </div>
 
-    <p class="playtime-total">Gesamte Spielzeit: <strong>{{ total_playtime }}</strong></p>
+    <p class="playtime-total">{{ t('channel.playtime_total') }} <strong>{{ total_playtime }}</strong></p>
 
     {% if has_abo %}
     <label class="abo-switch">
         <input type="checkbox" id="abo-toggle" {% if abo_enabled %}checked{% endif %}>
-        <span>Neue Folgen automatisch holen</span>
+        <span>{{ t('channel.abo_toggle') }}</span>
     </label>
     {% endif %}
 
     {% if blocks %}
     <div class="channel-bulk-actions">
         <button type="button" class="ghost-btn park-all-btn" data-channel="{{ channel.id }}">
-            Alle in Bibliothek verschieben
+            {{ t('channel.park_all') }}
         </button>
         <button type="button" class="delete-all-btn" data-channel="{{ channel.id }}">
-            Alle Titel löschen
+            {{ t('channel.delete_all') }}
         </button>
     </div>
     {% endif %}
@@ -34,21 +34,21 @@
         {% if b.is_block %}
         <li class="item block" data-sub-id="{{ b.subscription_id }}">
             <div class="block-head">
-                <span class="outer-handle" title="Verschieben">≡</span>
+                <span class="outer-handle" title="{{ t('item.handle_title') }}">≡</span>
                 <button type="button" class="block-toggle" aria-expanded="true">▾</button>
                 <span class="item-title">{{ b.title }}</span>
-                <span class="item-time">{{ b.entries|length }} Folgen</span>
+                <span class="item-time">{{ t('common.episodes', n=b.entries|length) }}</span>
             </div>
             <div class="block-actions">
-                <button type="button" class="ghost-btn block-to-library" data-sub-id="{{ b.subscription_id }}">→ Bibliothek</button>
+                <button type="button" class="ghost-btn block-to-library" data-sub-id="{{ b.subscription_id }}">{{ t('common.to_library') }}</button>
                 <select class="channel-select block-channel-select" data-sub-id="{{ b.subscription_id }}">
-                    <option value="">→ anderer Kanal…</option>
+                    <option value="">{{ t('common.other_channel') }}</option>
                     {% for ch in all_channels if ch.id != channel.id and ch.active %}
-                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    <option value="{{ ch.id }}">{{ channel_label(ch) }}</option>
                     {% endfor %}
                 </select>
-                <button type="button" class="ghost-btn move-btn block-move-btn" data-sub-id="{{ b.subscription_id }}">Verschieben</button>
-                <button type="button" class="block-delete-btn" data-sub-id="{{ b.subscription_id }}">Löschen</button>
+                <button type="button" class="ghost-btn move-btn block-move-btn" data-sub-id="{{ b.subscription_id }}">{{ t('common.move') }}</button>
+                <button type="button" class="block-delete-btn" data-sub-id="{{ b.subscription_id }}">{{ t('common.delete') }}</button>
             </div>
             <ul class="sub-item-list" data-sub-id="{{ b.subscription_id }}">
                 {% for item in b.entries %}
@@ -63,24 +63,24 @@
         <li class="item single" id="item-{{ item.id }}" data-id="{{ item.id }}">
             {% include "_item_row.html" %}
             <div class="single-actions">
-                <button type="button" class="ghost-btn item-to-library" data-id="{{ item.id }}">→ Bibliothek</button>
+                <button type="button" class="ghost-btn item-to-library" data-id="{{ item.id }}">{{ t('common.to_library') }}</button>
                 <select class="channel-select item-channel-select" data-id="{{ item.id }}">
-                    <option value="">→ anderer Kanal…</option>
+                    <option value="">{{ t('common.other_channel') }}</option>
                     {% for ch in all_channels if ch.id != channel.id and ch.active %}
-                    <option value="{{ ch.id }}">{{ ch.name }}</option>
+                    <option value="{{ ch.id }}">{{ channel_label(ch) }}</option>
                     {% endfor %}
                 </select>
-                <button type="button" class="ghost-btn move-btn item-move-btn" data-id="{{ item.id }}">Verschieben</button>
+                <button type="button" class="ghost-btn move-btn item-move-btn" data-id="{{ item.id }}">{{ t('common.move') }}</button>
             </div>
         </li>
         {% endif %}
         {% endfor %}
     </ul>
     {% else %}
-    <p class="empty">Hier ist noch nichts. Füge auf der Startseite etwas hinzu.</p>
+    <p class="empty">{{ t('channel.empty') }}</p>
     {% endif %}
 
-    <a href="/" class="back-link">← Zurück</a>
+    <a href="/" class="back-link">{{ t('common.back') }}</a>
 </section>
 
 <div id="toast" class="toast" hidden></div>
