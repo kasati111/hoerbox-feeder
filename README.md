@@ -59,7 +59,12 @@ Projekt übernimmt keine Haftung für die Art, wie es genutzt wird.
 - Bibliothek zum Parken von Inhalten außerhalb der aktiven Kanäle.
 - Läuft komplett lokal im eigenen Netzwerk, keine Cloud-Abhängigkeit.
 
-## Schnellstart
+## Für Admins
+
+Dieser Abschnitt richtet sich an die Person, die hoerbox-feeder installiert
+und betreut – nicht an die Eltern, die später nur Links einfügen.
+
+### Installation
 
 ```bash
 git clone https://github.com/kasati111/hoerbox-feeder.git
@@ -69,10 +74,49 @@ docker compose up -d --build
 
 Danach `http://<deine-server-ip>:8080` im Browser öffnen.
 
-**Aktualisieren:** `git pull && docker compose up -d --build`. Für ein
-Deployment ohne Git-Zugriff auf dem Zielserver (Tarball-basiert, inkl.
-Rollback) siehe [DEVELOPER.md § 8](DEVELOPER.md#8-deployment). Details zu
-Architektur und Entwicklung ebenfalls dort.
+### Update
+
+```bash
+git pull && docker compose up -d --build
+```
+
+Für ein Deployment ohne Git-Zugriff auf dem Zielserver (Tarball-basiert,
+inkl. Rollback über `schnellstart.sh`/`update.sh`) siehe
+[DEVELOPER.md § 8](DEVELOPER.md#8-deployment). Architektur/Entwicklung
+ebenfalls dort.
+
+### Kompatible Dienste
+
+- **YouTube** – Einzelvideo, Playlist oder ganzer Kanal (via yt-dlp).
+- **Spotify** – Track, Album oder Playlist (via spotdl aufgelöst; der
+  passende Titel wird dann auf YouTube gesucht und von dort geladen).
+- **Podcasts** – jeder offene RSS-Feed.
+- **Direkte Audio-Downloads** – z. B. [vorleser.net](https://vorleser.net)
+  (siehe Screenshot oben).
+- Grundsätzlich funktioniert auch vieles von den mehreren hundert weiteren
+  Seiten, die yt-dlp unterstützt – YouTube/Spotify/Podcasts sind die
+  getesteten und empfohlenen Quellen.
+
+### RSS-URLs
+
+Jeder der neun Kanäle hat einen eigenen Podcast-Feed unter
+`http://<deine-server-ip>:8080/feed/<kanal-id>.xml`:
+
+| ID | Kanal |
+|----|-------|
+| 0 | Violett |
+| 1 | Rot |
+| 2 | Dunkelblau |
+| 3 | Grün |
+| 4 | Gelb |
+| 5 | Türkis |
+| 6 | Hellblau |
+| 7 | Orange |
+| 8 | Dunkelgrün |
+
+Diese Adressen einmalig im Zielgerät oder einer Podcast-App eintragen –
+siehe auch die „Adressen“-Seite (`/einrichtung`) in der App selbst, die die
+fertigen URLs (inkl. QR-Codes) pro Kanal anzeigt.
 
 ## Lizenz
 
