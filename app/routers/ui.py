@@ -264,6 +264,7 @@ def library_page(request: Request, db: Session = Depends(get_db)):
         item_view = {
             "id": item.id,
             "title": item.title,
+            "filename": item.filename,
             "channel": crud.get_channel(db, item.channel_id),
         }
         if item.subscription_id:
@@ -277,6 +278,7 @@ def library_page(request: Request, db: Session = Depends(get_db)):
                 "entries": [{
                     "id": m.id,
                     "title": m.title,
+                    "filename": m.filename,
                     "channel": crud.get_channel(db, m.channel_id),
                 } for m in members],
             })

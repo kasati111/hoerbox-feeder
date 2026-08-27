@@ -931,6 +931,9 @@ const hoerbox = (function () {
         qa('.lib-block-toggle').forEach(btn => {
             btn.addEventListener('click', () => toggleLibraryBlock(btn));
         });
+        qa('.play-btn').forEach(btn => {
+            btn.addEventListener('click', () => togglePlayback(btn, btn.dataset.url));
+        });
     }
 
     function toggleLibraryBlock(btn) {

@@ -36,6 +36,9 @@
             <li class="library-item" data-id="{{ item.id }}" style="--btn-color: {{ item.channel.color_hex }};">
                 <span class="dot"></span>
                 <span class="item-title">{{ item.title }}</span>
+                {% if item.filename %}
+                <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+                {% endif %}
                 <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
                     <option value="">Auf Kanal legen…</option>
                     {% for ch in all_channels if ch.active %}
@@ -52,6 +55,9 @@
         <div class="library-card-head" style="--btn-color: {{ item.channel.color_hex }};">
             <span class="dot"></span>
             <strong>{{ item.title }}</strong>
+            {% if item.filename %}
+            <button type="button" class="play-icon-btn play-btn" data-url="/audio/{{ item.channel.id }}/{{ item.filename | urlencode }}" title="Abspielen">▶</button>
+            {% endif %}
         </div>
         <div class="library-actions" data-id="{{ item.id }}">
             <select class="channel-select lib-item-channel-select" data-id="{{ item.id }}">
