@@ -20,6 +20,9 @@ SD-Karten-Gefummel, kein Dateiname-Sortieren**, nur ein Browser und ein Link.
 *(Beispielinhalt im Screenshot: „Die Sterntaler“ von den Brüdern Grimm,
 gemeinfrei, via [vorleser.net](https://vorleser.net).)*
 
+📖 **Für Eltern:** ausführliches, bebildertes
+[Benutzerhandbuch (PDF)](docs/BENUTZERHANDBUCH.pdf) mit allen Funktionen.
+
 ## Wie es funktioniert
 
 1. Link einfügen, einem von neun Kanälen zuordnen.

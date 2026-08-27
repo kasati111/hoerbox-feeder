@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>hoerbox-feeder – Benutzerhandbuch</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c2733; line-height: 1.55; font-size: 11.5pt; margin: 0;
+  }
+  .cover {
+    min-height: 200mm; display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; page-break-after: always;
+  }
+  .cover .dots { display: flex; gap: 10px; margin-bottom: 28px; }
+  .cover .dots span { width: 22px; height: 22px; border-radius: 50%; display: inline-block; }
+  .cover h1 { font-size: 34pt; margin: 0 0 8px; }
+  .cover p.sub { font-size: 13pt; color: #667080; max-width: 380px; margin: 0 0 40px; }
+  .cover .meta { font-size: 9.5pt; color: #9aa4b0; }
+  h1 { font-size: 20pt; color: #1c2733; margin: 0 0 4px; }
+  h2 {
+    font-size: 15pt; color: #1c2733; margin: 30px 0 4px; padding-top: 14px;
+    border-top: 1px solid #e3e8ee;
+  }
+  h2 .num {
+    display: inline-block; width: 26px; height: 26px; border-radius: 50%;
+    background: #2196F3; color: #fff; text-align: center; line-height: 26px;
+    font-size: 12pt; margin-right: 8px; vertical-align: middle;
+  }
+  h3 { font-size: 12.5pt; margin: 18px 0 4px; color: #1c2733; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .shot {
+    display: block; max-width: 100%; border: 1px solid #d5dbe2; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08); margin: 10px 0 4px;
+  }
+  .shot.narrow { max-width: 340px; }
+  .shot.tall { max-width: none; max-height: 215mm; width: auto; margin-left: auto; margin-right: auto; }
+  .caption { font-size: 9.5pt; color: #667080; margin: 0 0 14px; font-style: italic; }
+  .callout {
+    background: #eef1f4; border-radius: 10px; padding: 10px 14px; margin: 10px 0;
+    font-size: 10.5pt;
+  }
+  .callout.warn { background: #fdecea; color: #7a1f14; }
+  .callout.legal { background: #fdecea; color: #7a1f14; }
+  .kbd {
+    display: inline-block; background: #eef1f4; border-radius: 6px; padding: 1px 7px;
+    font-size: 10pt; font-weight: 600;
+  }
+  table { border-collapse: collapse; margin: 8px 0 14px; font-size: 10.5pt; }
+  table.feed-table td, table.feed-table th { padding: 4px 12px 4px 0; text-align: left; }
+  .toc { margin-top: 20px; }
+  .toc a { color: #1c2733; text-decoration: none; }
+  .toc li { list-style: none; margin-bottom: 8px; font-size: 11.5pt; }
+  .toc .num {
+    display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: #2196F3; color: #fff; text-align: center; line-height: 22px;
+    font-size: 10pt; margin-right: 8px;
+  }
+  footer.pagefoot { font-size: 8.5pt; color: #9aa4b0; margin-top: 40px; }
+  .section { break-inside: auto; }
+  .section h2 { break-before: page; }
+  .section:first-of-type h2 { break-before: auto; }
+  .shot, .shot + .caption { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="dots">
+    <span style="background:#4A148C"></span><span style="background:#D32F2F"></span>
+    <span style="background:#1976D2"></span><span style="background:#8BC34A"></span>
+    <span style="background:#FBC02D"></span><span style="background:#00ACC1"></span>
+    <span style="background:#2196F3"></span><span style="background:#F57C00"></span>
+    <span style="background:#2E7D32"></span>
+  </div>
+  <h1>hoerbox-feeder</h1>
+  <p class="sub">Benutzerhandbuch – so füllst du die neun Knöpfe mit Musik,
+  Hörspielen und Podcasts, ganz ohne Kabel oder SD-Karte.</p>
+  <div class="meta">Für Eltern &amp; alle, die hoerbox-feeder im Alltag nutzen · Stand 2026</div>
+</section>
+
+<section>
+  <h1>Inhalt</h1>
+  <ol class="toc">
+    <li><a href="#s1"><span class="num">1</span>Was ist hoerbox-feeder?</a></li>
+    <li><a href="#s2"><span class="num">2</span>Einen Link hinzufügen</a></li>
+    <li><a href="#s3"><span class="num">3</span>Die neun Knöpfe</a></li>
+    <li><a href="#s4"><span class="num">4</span>In der Kanal-Ansicht</a></li>
+    <li><a href="#s5"><span class="num">5</span>Wenn etwas nicht klappt</a></li>
+    <li><a href="#s6"><span class="num">6</span>Bibliothek</a></li>
+    <li><a href="#s7"><span class="num">7</span>Belegung &amp; SD-Karten-Export</a></li>
+    <li><a href="#s8"><span class="num">8</span>Bearbeiten</a></li>
+    <li><a href="#s9"><span class="num">9</span>Setup</a></li>
+    <li><a href="#s10"><span class="num">10</span>Rechtlicher Hinweis</a></li>
+    <li><a href="#s11"><span class="num">11</span>Fragen &amp; Hilfe</a></li>
+  </ol>
+</section>
+
+<section class="section" id="s1">
+  <h2><span class="num">1</span>Was ist hoerbox-feeder?</h2>
+  <p>hoerbox-feeder ist eine kleine Web-Seite, die im heimischen WLAN läuft.
+  Du fügst dort per Handy, Tablet oder PC einen Link ein – z. B. von
+  YouTube, Spotify oder einem Podcast – und ordnest ihn einem von neun
+  farbigen Knöpfen zu. hoerbox-feeder lädt den Inhalt herunter, wandelt
+  ihn in ein einheitliches Tonformat um und macht ihn dem Abspielgerät
+  automatisch verfügbar. Neue Folgen einer Playlist oder eines Podcasts
+  kommen danach von selbst nach – du musst nichts wiederholen.</p>
+  <div class="callout">
+    💡 Handy/Tablet/PC und das Abspielgerät müssen im selben WLAN sein.
+  </div>
+</section>
+
+<section class="section" id="s2">
+  <h2><span class="num">2</span>Einen Link hinzufügen</h2>
+  <p>Das ist der Weg, den du am häufigsten gehst:</p>
+  <ol>
+    <li>Link kopieren – z. B. aus der YouTube- oder Spotify-App, oder von
+    einer Podcast-Seite.</li>
+    <li>Auf der Startseite ins Feld einfügen (per Zwischenablage-Symbol
+    oder einfach hineintippen).</li>
+    <li>Einen der neun Farbknöpfe antippen.</li>
+    <li>Auf <strong>„Hinzufügen“</strong> tippen.</li>
+  </ol>
+  <img class="shot" src="screenshots/handbuch/02-start-eingabe.png" alt="Startseite mit eingefügtem Link und ausgewähltem Knopf">
+  <p class="caption">Link eingefügt, Knopf „Türkis“ ausgewählt – der
+  „Hinzufügen“-Knopf wird aktiv.</p>
+  <p>Danach siehst du eine Anzeige mit dem Fortschritt: erst
+  „Wird vorbereitet …“, dann „Wird geladen … X %“, zum Schluss kurz
+  „Umwandlung zu Audio …“. Ist es fertig, taucht der Titel im gewählten
+  Kanal auf.</p>
+  <p>Handelt es sich um eine ganze Playlist oder einen Podcast-Feed statt
+  eines einzelnen Titels, erkennt hoerbox-feeder das automatisch und
+  richtet ein <strong>Abo</strong> ein: neue Folgen werden von da an
+  regelmäßig von selbst nachgeladen, ohne dass du den Link erneut
+  einfügen musst (mehr dazu in Kapitel 4).</p>
+</section>
+
+<section class="section" id="s3">
+  <h2><span class="num">3</span>Die neun Knöpfe</h2>
+  <p>Auf der Startseite siehst du alle neun Knöpfe mit ihrer Farbe und –
+  klein darunter – wie viele Titel dort aktuell liegen. Ein Knopf kann
+  auch <strong>deaktiviert</strong> sein (grau dargestellt): das ist z. B.
+  sinnvoll, wenn dieser Knopf am Gerät extern bespielt wird, etwa per
+  SD-Karte, und hoerbox-feeder ihn deshalb in Ruhe lassen soll (siehe
+  Kapitel 9).</p>
+  <img class="shot" src="screenshots/handbuch/01-start.png" alt="Startseite mit allen neun Kanälen und Belegungszahlen">
+  <p class="caption">Sechs aktive Knöpfe mit Belegungszahl, drei
+  deaktivierte (ausgegraut).</p>
+</section>
+
+<section class="section" id="s4">
+  <h2><span class="num">4</span>In der Kanal-Ansicht</h2>
+  <p>Tippst du auf einen Knopf, siehst du alle seine Titel. Pro Titel
+  stehen dir folgende Möglichkeiten zur Verfügung:</p>
+  <ul>
+    <li><strong>▶ Abspielen</strong> – spielt den kompletten Titel direkt
+    im Browser ab (nochmal tippen stoppt).</li>
+    <li><strong>≡ (Griff links)</strong> – zum Ändern der Reihenfolge
+    per Ziehen.</li>
+    <li><strong>→ Bibliothek</strong> – parkt den Titel, ohne ihn zu
+    löschen (siehe Kapitel 6).</li>
+    <li><strong>→ anderer Kanal… + Verschieben</strong> – legt den Titel
+    auf einen anderen Knopf.</li>
+    <li><strong>✕</strong> – löscht den Titel endgültig.</li>
+  </ul>
+  <p>Gehört ein Titel zu einer Playlist oder einem Podcast-Abo, werden
+  alle zugehörigen Folgen zu einem <strong>Block</strong>
+  zusammengefasst (auf-/zuklappbar), mit denselben Aktionen zusätzlich
+  für den ganzen Block auf einmal. Über den Schalter
+  <span class="kbd">Neue Folgen automatisch holen</span> lässt sich das
+  automatische Nachladen für diesen Kanal ein- oder ausschalten – ist er
+  aus, bleiben vorhandene Folgen erhalten, es kommt aber nichts Neues
+  mehr von selbst dazu.</p>
+  <p>Über den Kanal-Kopf lässt sich außerdem der <strong>ganze Kanal auf
+  einmal</strong> in die Bibliothek verschieben oder komplett löschen:</p>
+  <img class="shot tall" src="screenshots/handbuch/03-kanal.png" alt="Kanal-Ansicht mit mehreren Titeln in unterschiedlichen Zuständen">
+  <p class="caption">Kanal-Ansicht: zwei fertige Titel, ein fehlgeschlagener
+  Titel und ein Titel mit automatisch gefundener Ersatzquelle – alle
+  Aktionen im Überblick (Beispielinhalte, gemeinfrei).</p>
+</section>
+
+<section class="section" id="s5">
+  <h2><span class="num">5</span>Wenn etwas nicht klappt</h2>
+  <p>Manchmal lässt sich ein Link nicht laden (z. B. weil das Video
+  gelöscht wurde). Der Titel zeigt dann eine kurze Fehlermeldung und
+  bietet:</p>
+  <ul>
+    <li><strong>Jetzt nochmal versuchen</strong> – ein sofortiger neuer
+    Versuch mit derselben Quelle.</li>
+    <li><strong>Andere Quelle suchen</strong> – hoerbox-feeder sucht
+    automatisch nach einem Ersatz mit demselben Titel (erscheint erst,
+    nachdem bereits automatisch ein zweiter Versuch unternommen wurde).</li>
+    <li><strong>Selbst suchen</strong> – du gibst einen eigenen
+    Suchbegriff ein und wählst aus bis zu fünf Treffern (mit Bild, Name,
+    Länge) selbst den passenden aus.</li>
+  </ul>
+  <img class="shot tall" src="screenshots/handbuch/04-such-panel.png" alt="Geöffnetes Suchfeld für die manuelle Ersatzsuche">
+  <p class="caption">„Selbst suchen“ öffnet ein Eingabefeld direkt unter
+  dem betroffenen Titel.</p>
+  <p>Wurde eine Ersatzquelle automatisch gefunden (ohne dass jemand sie
+  sich angesehen hat), erscheint am Titel der Hinweis
+  <span class="kbd">⟳ andere Quelle – bitte prüfen</span>. Kurz
+  anhören reicht meist, um zu sehen ob es passt – ein Tipp auf
+  <strong>✓ passt</strong> blendet den Hinweis danach aus.</p>
+</section>
+
+<section class="section" id="s6">
+  <h2><span class="num">6</span>Bibliothek</h2>
+  <p>Die Bibliothek ist ein Zwischenlager für Titel und Playlists, die
+  gerade keinem Knopf zugeordnet sein sollen, aber nicht gelöscht werden
+  sollen. Von dort aus lässt sich jeder Eintrag jederzeit wieder einem
+  Knopf zuweisen, abspielen, verschieben oder endgültig löschen.</p>
+  <img class="shot narrow" src="screenshots/handbuch/05-bibliothek.png" alt="Ein Eintrag in der Bibliothek mit Play-, Zuweisungs- und Löschmöglichkeit">
+  <p class="caption">Ein geparkter Titel in der Bibliothek.</p>
+</section>
+
+<section class="section" id="s7">
+  <h2><span class="num">7</span>Belegung &amp; SD-Karten-Export</h2>
+  <p>Die Belegung-Seite zeigt, wie viel Speicherplatz insgesamt und pro
+  Knopf belegt ist, mit jeder einzelnen Datei zum Anhören oder Löschen.
+  Falls dein Abspielgerät per SD-Karte bespielt wird statt per WLAN, lädt
+  der Knopf <strong>„Für SD-Karte herunterladen“</strong> ganz oben alle
+  Titel als ZIP-Datei herunter, bereits in nummerierten Ordnern 0–8
+  sortiert – einfach entpacken und auf die Karte kopieren.</p>
+  <img class="shot narrow" src="screenshots/handbuch/06-belegung.png" alt="Belegungsübersicht für einen Kanal mit zwei Dateien">
+  <p class="caption">Belegung eines Kanals mit zwei Dateien.</p>
+</section>
+
+<section class="section" id="s8">
+  <h2><span class="num">8</span>Bearbeiten</h2>
+  <p>„Bearbeiten“ ist der schnelle Weg zu einem bestimmten Knopf, mit
+  kleinen Warn-Hinweisen direkt auf der Kachel: eine rote Zahl zeigt
+  Titel, die gerade ein Problem haben, ein <span class="kbd">⟳</span>-Chip
+  zeigt automatisch gefundene, noch ungeprüfte Ersatzquellen.</p>
+  <img class="shot" src="screenshots/handbuch/07-bearbeiten.png" alt="Bearbeiten-Übersicht mit Warn-Chips auf einem Kanal">
+  <p class="caption">Ein Knopf mit einem Problem-Titel und einer noch zu
+  prüfenden Ersatzquelle.</p>
+</section>
+
+<section class="section" id="s9">
+  <h2><span class="num">9</span>Setup</h2>
+  <p>Die Setup-Seite ist vor allem für die einmalige Einrichtung gedacht:</p>
+  <h3>Adressen fürs Gerät</h3>
+  <p>Jeder Knopf hat eine eigene Adresse (als QR-Code und als Text), die
+  einmalig im Abspielgerät oder einer Podcast-App eingetragen wird.
+  Danach erscheinen neue Titel dort von selbst.</p>
+  <img class="shot" src="screenshots/handbuch/09-setup-adressen.png" alt="QR-Codes und Adressen für jeden Kanal">
+  <p class="caption">Jeder Knopf bekommt seine eigene Adresse zum
+  einmaligen Eintragen.</p>
+  <h3>Einen Knopf deaktivieren</h3>
+  <p>Läuft auf einem Knopf externer Content (z. B. von einer SD-Karte)?
+  Dann kannst du ihn hier deaktivieren, indem du auf den jeweiligen
+  QR-Code klickst. hoerbox-feeder lässt ihn dann in Ruhe, damit nichts
+  durcheinanderkommt.</p>
+  <h3>Einstellungen</h3>
+  <p>Drei Werte lassen sich hier für die ganze Anwendung anpassen:</p>
+  <img class="shot" src="screenshots/handbuch/08-setup-einstellungen.png" alt="Die drei Einstellungs-Karten: Maximale Downloads, Maximale Playlistlänge, Audioausgabe">
+  <table class="feed-table">
+    <tr><td><strong>Maximale Downloads</strong></td><td>wie viele Folgen einer Playlist/eines
+    Podcasts beim ersten Mal höchstens auf einmal geladen werden – der
+    Rest kommt automatisch nach und nach nach.</td></tr>
+    <tr><td><strong>Maximale Playlistlänge</strong></td><td>wie viele Folgen pro Knopf höchstens
+    aufgehoben werden – ältere Folgen darüber hinaus werden automatisch
+    in die Bibliothek verschoben (nicht gelöscht).</td></tr>
+    <tr><td><strong>Audioausgabe</strong></td><td>Mono oder Stereo für neue Downloads. Bereits
+    geladene Titel behalten ihre bisherige Tonspur.</td></tr>
+  </table>
+  <p>Werden YouTube-Downloads blockiert, lässt sich außerdem ein
+  YouTube-Zugang (Cookies-Datei) hochladen – ein grüner Haken oben auf
+  der Setup-Seite zeigt, ob das bereits eingerichtet ist.</p>
+</section>
+
+<section class="section" id="s10">
+  <h2><span class="num">10</span>Rechtlicher Hinweis</h2>
+  <div class="callout legal">
+    Downloads von Streaming-Plattformen können deren
+    Nutzungsbedingungen und/oder Urheberrecht verletzen. Du bist selbst
+    dafür verantwortlich, hoerbox-feeder nur für Inhalte zu verwenden,
+    die du dazu nutzen darfst – z. B. Podcasts mit offenem RSS-Feed,
+    gemeinfreie Inhalte oder eigenes Material.
+  </div>
+</section>
+
+<section class="section" id="s11">
+  <h2><span class="num">11</span>Fragen &amp; Hilfe</h2>
+  <p>Bei Fragen, Fehlern oder Ideen wendet euch am besten an die Person,
+  die hoerbox-feeder bei euch eingerichtet hat.</p>
+</section>
+
+</body>
+</html>
