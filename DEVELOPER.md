@@ -278,7 +278,7 @@ Alle Einstellungen werden über Umgebungsvariablen gesteuert:
 | `DEFAULT_RETENTION` | `20` | Standardanzahl Dateien pro Kanal |
 | `MAX_INITIAL_PLAYLIST_ITEMS` | `60` | Maximale Anzahl Items beim ersten Abo-Sync |
 | `STORAGE_WARN_MB` | `100` | Warnschwelle freier Speicher in MB |
-| `LEGAL_NOTICE` | *(leer)* | Optionaler Hinweistext im Footer |
+| `LANG` | `de` | Seed-Default für `Settings.language` (`de`/`en`) beim ersten Start. Ungültige Werte fallen still auf `de` zurück (siehe §17). Danach live über die Setup-Seite änderbar, ohne Neustart. |
 | `SELFTEST_URL` | *(leer)* | URL für wöchentlichen Selbsttest |
 
 Für Docker: in `docker-compose.yml` unter `environment:` setzen.
@@ -617,5 +617,94 @@ MP3s sind schon komprimiert) in eine echte Temp-Datei auf Platte statt in
 den RAM (die Bibliothek kann mehrere hundert MB groß werden – zu viel für
 den Pi-Arbeitsspeicher). Temp-Datei wird über Starlettes `BackgroundTask`
 nach dem Senden automatisch gelöscht.
+
+---
+
+## 17. Mehrsprachigkeit (i18n) & Kanal-Anzeige
+
+### Architektur
+
+Kein gettext/Babel, keine kompilierten `.po`/`.mo`-Kataloge, kein Build-Step
+– passend zum Rest des Projekts (vanilla JS, Jinja2 ohne Bundler).
+Stattdessen eine einzige zentrale Tabelle in `app/i18n.py`:
+
+```python
+STRINGS = {
+    "nav.start": {"de": "Start", "en": "Home"},
+    "api.entry_deleted": {"de": "Eintrag gelöscht.", "en": "Entry deleted."},
+    ...
+}
+
+def t(key: str, lang: str, **kwargs) -> str:
+    ...  # Lookup + .format(**kwargs), Fallback auf "de", dann auf den Key selbst
+```
+
+`t()` wird sowohl serverseitig genutzt (Jinja-Kontext-Funktion, siehe unten,
+und direkt in Python zum Bauen von API-Fehlermeldungen) als auch um eine
+kleine, gezielte `js.*`-Teilmenge als JSON in `templates/base.html`
+einzubetten (`window.HOERBOX_I18N`) – `static/app.js` hat eine eigene,
+minimale `i18n(key, params)`-Helferfunktion mit derselben `{name}`-
+Platzhalter-Syntax wie Python.
+
+### Sprache (`Settings.language`)
+
+Folgt exakt dem bereits etablierten Muster von `Settings.audio_channels`:
+
+- `config.LANG` liest die ENV-Variable `LANG` (Default `"de"`, validiert
+  gegen `{"de","en"}` – ein System-`LANG` wie `C.UTF-8` fällt still auf
+  `"de"` zurück statt die UI-Sprache zu verstellen).
+- `crud.get_settings()` seedet `Settings.language` beim ersten Anlegen der
+  Singleton-Zeile aus `config.LANG`.
+- Danach lebt der Wert ausschließlich in der DB und wird über die
+  Setup-Seite (`POST /api/settings {"language": "de"|"en"}`) geändert –
+  sofort wirksam, kein Neustart nötig (jede Anfrage liest
+  `crud.get_settings(db).language` neu).
+- `app/routers/ui.py::_base_context(db)` ist der zentrale
+  Context-Injection-Punkt für alle HTML-Routen: liefert `lang`, `skin`, `t`
+  sowie `channel_label`/`channel_color_hex` (s.u.) in den Jinja-Kontext.
+  Hintergrund-Code ohne Request (Worker, Scheduler, `feed.py`) liest
+  `crud.get_settings(db).language` jeweils selbst aus der eigenen
+  `session_scope()`.
+- Historische, bereits gespeicherte Texte (`item.error_text`,
+  Fallback-Titel wie „Ohne Titel") bleiben in der Sprache, in der sie
+  entstanden sind – keine Rückwirkung, analog zu `audio_channels` (ein
+  Sprachwechsel wandelt auch keine bereits kodierten MP3s um).
+
+### Kanal-Anzeige (`Settings.skin`)
+
+Zweites, unabhängiges Setting (`"colors"` Default | `"numbers"`), ebenfalls
+per Setup-Seite umschaltbar. `channel.color` (die bereits vorhandene,
+sprachunabhängige Kennung `violet`/`red`/`darkblue`/…) dient als
+Übersetzungs-Lookup-Key für die Farbnamen – `channel.name` in der DB bleibt
+unverändert als interner/Seed-Wert bestehen (wird von `crud.seed_channels()`
+weiterhin aus `config.CHANNELS` synchronisiert), wird aber an keiner
+Nutzer-sichtbaren Stelle mehr direkt gerendert.
+
+```python
+def channel_label(channel, lang, skin):
+    if skin == "numbers":
+        return t("channel.numbered_button", lang, n=channel.id + 1)  # "Taste 5"/"Button 5"
+    return channel_color_name(channel.color, lang)                   # "Türkis"/"Turquoise"
+
+def channel_color_hex(channel, skin):
+    return NEUTRAL_SKIN_HEX if skin == "numbers" else channel.color_hex
+```
+
+Im `"numbers"`-Skin ist **jede** Kanalfarbe im UI neutral-grau
+(`#667080`, wiederverwendet aus `--muted` in `static/style.css`) – auch der
+Farbpunkt, nicht nur der Name. Gedacht für hörbert-Varianten/Nachbauten mit
+nummerierten statt farbigen Tasten.
+
+### Migration
+
+```python
+("settings", "language", "TEXT NOT NULL DEFAULT 'de'"),
+("settings", "skin", "TEXT NOT NULL DEFAULT 'colors'"),
+```
+
+in `app/migrations.py::_NEW_COLUMNS`, wie jede andere nachträglich
+hinzugefügte Spalte (siehe Modul-Docstring dort).
+
+---
 
 *Dieses Dokument zuletzt aktualisiert: August 2026*

@@ -1,5 +1,7 @@
 # Sicherheitsrichtlinie
 
+*[English version](SECURITY.en.md)*
+
 hoerbox-feeder ist für den Betrieb im eigenen, vertrauenswürdigen LAN gedacht
 (siehe Hinweis in `docker-compose.yml`: nicht direkt ins Internet
 exponieren, kein eingebautes Auth). Trotzdem: wenn du eine

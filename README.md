@@ -1,5 +1,7 @@
 # hoerbox-feeder
 
+*[English version](README.en.md)*
+
 [![CI](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
@@ -21,7 +23,8 @@ SD-Karten-Gefummel, kein Dateiname-Sortieren**, nur ein Browser und ein Link.
 gemeinfrei, via [vorleser.net](https://vorleser.net).)*
 
 📖 **Für Eltern:** ausführliches, bebildertes
-[Benutzerhandbuch (PDF)](docs/BENUTZERHANDBUCH.pdf) mit allen Funktionen.
+[Benutzerhandbuch (PDF)](docs/BENUTZERHANDBUCH.pdf) mit allen Funktionen –
+auch als [English User Guide (PDF)](docs/USER_MANUAL.pdf).
 
 ## Wie es funktioniert
 
@@ -59,6 +62,9 @@ Projekt übernimmt keine Haftung für die Art, wie es genutzt wird.
   und automatisch als Abo eingerichtet (neue Folgen kommen von selbst).
 - Automatische Lautstärke-Normalisierung, Cover-Einbettung, Tonspur
   (Mono/Stereo) global einstellbar (Setup-Seite).
+- Sprache (Deutsch/Englisch) und Kanal-Anzeige (bunte Knöpfe oder
+  nummerierte Kanaltasten, für hörbert-Varianten ohne Farbtasten)
+  individuell einstellbar (Setup-Seite).
 - Übersicht über Speicherbelegung pro Kanal, SD-Karten-Export als ZIP.
 - Bibliothek zum Parken von Inhalten außerhalb der aktiven Kanäle.
 - Läuft komplett lokal im eigenen Netzwerk, keine Cloud-Abhängigkeit.

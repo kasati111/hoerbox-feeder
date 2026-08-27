@@ -1,5 +1,7 @@
 # Verhaltenskodex
 
+*[English version](CODE_OF_CONDUCT.en.md)*
+
 Dieses Projekt richtet sich unter anderem an Eltern, die für ihre Kinder
 Inhalte einrichten – ein freundlicher, respektvoller Umgangston ist uns
 entsprechend wichtig.

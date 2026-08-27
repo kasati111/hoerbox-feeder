@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>hoerbox-feeder – User Guide</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c2733; line-height: 1.55; font-size: 11.5pt; margin: 0;
+  }
+  .cover {
+    min-height: 200mm; display: flex; flex-direction: column; justify-content: center;
+    align-items: flex-start; page-break-after: always;
+  }
+  .cover .dots { display: flex; gap: 10px; margin-bottom: 28px; }
+  .cover .dots span { width: 22px; height: 22px; border-radius: 50%; display: inline-block; }
+  .cover h1 { font-size: 34pt; margin: 0 0 8px; }
+  .cover p.sub { font-size: 13pt; color: #667080; max-width: 380px; margin: 0 0 40px; }
+  .cover .meta { font-size: 9.5pt; color: #9aa4b0; }
+  h1 { font-size: 20pt; color: #1c2733; margin: 0 0 4px; }
+  h2 {
+    font-size: 15pt; color: #1c2733; margin: 30px 0 4px; padding-top: 14px;
+    border-top: 1px solid #e3e8ee;
+  }
+  h2 .num {
+    display: inline-block; width: 26px; height: 26px; border-radius: 50%;
+    background: #2196F3; color: #fff; text-align: center; line-height: 26px;
+    font-size: 12pt; margin-right: 8px; vertical-align: middle;
+  }
+  h3 { font-size: 12.5pt; margin: 18px 0 4px; color: #1c2733; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .shot {
+    display: block; max-width: 100%; border: 1px solid #d5dbe2; border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08); margin: 10px 0 4px;
+  }
+  .shot.narrow { max-width: 340px; }
+  .shot.tall { max-width: none; max-height: 215mm; width: auto; margin-left: auto; margin-right: auto; }
+  .caption { font-size: 9.5pt; color: #667080; margin: 0 0 14px; font-style: italic; }
+  .callout {
+    background: #eef1f4; border-radius: 10px; padding: 10px 14px; margin: 10px 0;
+    font-size: 10.5pt;
+  }
+  .callout.warn { background: #fdecea; color: #7a1f14; }
+  .callout.legal { background: #fdecea; color: #7a1f14; }
+  .kbd {
+    display: inline-block; background: #eef1f4; border-radius: 6px; padding: 1px 7px;
+    font-size: 10pt; font-weight: 600;
+  }
+  table { border-collapse: collapse; margin: 8px 0 14px; font-size: 10.5pt; }
+  table.feed-table td, table.feed-table th { padding: 4px 12px 4px 0; text-align: left; }
+  .toc { margin-top: 20px; }
+  .toc a { color: #1c2733; text-decoration: none; }
+  .toc li { list-style: none; margin-bottom: 8px; font-size: 11.5pt; }
+  .toc .num {
+    display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: #2196F3; color: #fff; text-align: center; line-height: 22px;
+    font-size: 10pt; margin-right: 8px;
+  }
+  footer.pagefoot { font-size: 8.5pt; color: #9aa4b0; margin-top: 40px; }
+  .section { break-inside: auto; }
+  .section h2 { break-before: page; }
+  .section:first-of-type h2 { break-before: auto; }
+  .shot, .shot + .caption { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="dots">
+    <span style="background:#4A148C"></span><span style="background:#D32F2F"></span>
+    <span style="background:#1976D2"></span><span style="background:#8BC34A"></span>
+    <span style="background:#FBC02D"></span><span style="background:#00ACC1"></span>
+    <span style="background:#2196F3"></span><span style="background:#F57C00"></span>
+    <span style="background:#2E7D32"></span>
+  </div>
+  <h1>hoerbox-feeder</h1>
+  <p class="sub">User Guide – how to fill the nine buttons with music,
+  audiobooks, and podcasts, with no cables or SD card involved.</p>
+  <div class="meta">For parents &amp; anyone using hoerbox-feeder day to day · 2026 edition</div>
+</section>
+
+<section>
+  <h1>Contents</h1>
+  <ol class="toc">
+    <li><a href="#s1"><span class="num">1</span>What is hoerbox-feeder?</a></li>
+    <li><a href="#s2"><span class="num">2</span>Adding a link</a></li>
+    <li><a href="#s3"><span class="num">3</span>The nine buttons</a></li>
+    <li><a href="#s4"><span class="num">4</span>Inside a button's view</a></li>
+    <li><a href="#s5"><span class="num">5</span>When something doesn't work</a></li>
+    <li><a href="#s6"><span class="num">6</span>Library</a></li>
+    <li><a href="#s7"><span class="num">7</span>Storage &amp; SD-card export</a></li>
+    <li><a href="#s8"><span class="num">8</span>Edit</a></li>
+    <li><a href="#s9"><span class="num">9</span>Setup</a></li>
+    <li><a href="#s10"><span class="num">10</span>Legal notice</a></li>
+    <li><a href="#s11"><span class="num">11</span>Questions &amp; help</a></li>
+  </ol>
+</section>
+
+<section class="section" id="s1">
+  <h2><span class="num">1</span>What is hoerbox-feeder?</h2>
+  <p>hoerbox-feeder is a small web page that runs on your home WiFi. You
+  paste a link there from your phone, tablet, or PC – e.g. from YouTube,
+  Spotify, or a podcast – and assign it to one of nine colored buttons.
+  hoerbox-feeder downloads the content, converts it into a consistent
+  audio format, and makes it automatically available to the player. New
+  episodes of a playlist or podcast then arrive on their own afterward –
+  you don't have to repeat anything.</p>
+  <div class="callout">
+    💡 Your phone/tablet/PC and the player need to be on the same WiFi.
+  </div>
+</section>
+
+<section class="section" id="s2">
+  <h2><span class="num">2</span>Adding a link</h2>
+  <p>This is the path you'll use most often:</p>
+  <ol>
+    <li>Copy a link – e.g. from the YouTube or Spotify app, or from a
+    podcast page.</li>
+    <li>Paste it into the field on the home page (via the clipboard icon,
+    or just type it in).</li>
+    <li>Tap one of the nine color buttons.</li>
+    <li>Tap <strong>"Add"</strong>.</li>
+  </ol>
+  <img class="shot" src="screenshots/user_manual/02-start-eingabe.png" alt="Home page with a pasted link and a selected button">
+  <p class="caption">Link pasted, "Turquoise" button selected – the "Add"
+  button becomes active.</p>
+  <p>You'll then see a progress display: first "Preparing …", then
+  "Loading … X%", and briefly "Converting to audio …" at the end. Once
+  it's done, the title shows up under the button you chose.</p>
+  <p>If it turns out to be a whole playlist or podcast feed rather than a
+  single title, hoerbox-feeder detects that automatically and sets up a
+  <strong>subscription</strong>: new episodes are then fetched
+  automatically going forward, without you having to paste the link again
+  (more on this in chapter 4).</p>
+</section>
+
+<section class="section" id="s3">
+  <h2><span class="num">3</span>The nine buttons</h2>
+  <p>On the home page you see all nine buttons with their color and –
+  in small text underneath – how many titles currently sit there. A
+  button can also be <strong>deactivated</strong> (shown grayed out):
+  useful, for example, when that button is played externally on the
+  device, say from an SD card, and you want hoerbox-feeder to leave it
+  alone (see chapter 9).</p>
+  <img class="shot" src="screenshots/user_manual/01-start.png" alt="Home page with all nine buttons and their item counts">
+  <p class="caption">Six active buttons with an item count, three
+  deactivated (grayed out).</p>
+</section>
+
+<section class="section" id="s4">
+  <h2><span class="num">4</span>Inside a button's view</h2>
+  <p>Tap a button to see all its titles. For each title, you have these
+  options:</p>
+  <ul>
+    <li><strong>▶ Play</strong> – plays the whole title right in the
+    browser (tap again to stop).</li>
+    <li><strong>≡ (handle on the left)</strong> – drag to reorder.</li>
+    <li><strong>→ Library</strong> – parks the title without deleting
+    it (see chapter 6).</li>
+    <li><strong>→ other button… + Move</strong> – puts the title on a
+    different button.</li>
+    <li><strong>✕</strong> – permanently deletes the title.</li>
+  </ul>
+  <p>If a title belongs to a playlist or podcast subscription, all its
+  episodes are grouped into a <strong>block</strong> (expandable/
+  collapsible), with the same actions also available for the whole block
+  at once. The <span class="kbd">Fetch new episodes automatically</span>
+  switch turns automatic fetching on or off for that button – when it's
+  off, existing episodes stay, but nothing new arrives on its own
+  anymore.</p>
+  <p>The button's header also lets you move the <strong>entire
+  button's content</strong> to the library, or delete it all, in one
+  go:</p>
+  <img class="shot tall" src="screenshots/user_manual/03-kanal.png" alt="Button view with several titles in different states">
+  <p class="caption">Button view: two finished titles, one failed title,
+  and one title with an automatically found replacement source – every
+  action at a glance (example content, public domain).</p>
+</section>
+
+<section class="section" id="s5">
+  <h2><span class="num">5</span>When something doesn't work</h2>
+  <p>Sometimes a link fails to load (e.g. because the video was deleted).
+  The title then shows a short error message and offers:</p>
+  <ul>
+    <li><strong>Try again now</strong> – an immediate retry with the
+    same source.</li>
+    <li><strong>Find another source</strong> – hoerbox-feeder
+    automatically searches for a replacement with the same title
+    (appears only after an automatic second attempt has already been
+    made).</li>
+    <li><strong>Search myself</strong> – you enter your own search term
+    and pick the right one yourself from up to five results (with
+    thumbnail, name, and length).</li>
+  </ul>
+  <img class="shot tall" src="screenshots/user_manual/04-such-panel.png" alt="Open search field for manually finding a replacement">
+  <p class="caption">"Search myself" opens an input field right below the
+  affected title.</p>
+  <p>If a replacement source was found automatically (without anyone
+  reviewing it), the title shows the hint
+  <span class="kbd">⟳ alternate source – please check</span>. A quick
+  listen is usually enough to tell if it's right – tapping
+  <strong>✓ looks good</strong> dismisses the hint afterward.</p>
+</section>
+
+<section class="section" id="s6">
+  <h2><span class="num">6</span>Library</h2>
+  <p>The library is a holding area for titles and playlists that
+  shouldn't be assigned to a button right now, but also shouldn't be
+  deleted. From there, every entry can be assigned to a button, played,
+  moved, or permanently deleted at any time.</p>
+  <img class="shot narrow" src="screenshots/user_manual/05-bibliothek.png" alt="An entry in the library with play, assign, and delete options">
+  <p class="caption">A parked title in the library.</p>
+</section>
+
+<section class="section" id="s7">
+  <h2><span class="num">7</span>Storage &amp; SD-card export</h2>
+  <p>The Storage page shows how much space is used in total and per
+  button, with every individual file available to listen to or delete.
+  If your player is loaded via an SD card instead of WiFi, the
+  <strong>"Download for SD card"</strong> button at the top downloads all
+  titles as a ZIP file, already sorted into numbered folders 0–8 – just
+  unzip and copy onto the card.</p>
+  <img class="shot narrow" src="screenshots/user_manual/06-belegung.png" alt="Storage overview for one button with two files">
+  <p class="caption">Storage for one button with two files.</p>
+</section>
+
+<section class="section" id="s8">
+  <h2><span class="num">8</span>Edit</h2>
+  <p>"Edit" is the quick way to a specific button, with small warning
+  hints right on the tile: a red number shows titles currently having a
+  problem, a <span class="kbd">⟳</span> chip shows automatically found,
+  not-yet-reviewed replacement sources.</p>
+  <img class="shot" src="screenshots/user_manual/07-bearbeiten.png" alt="Edit overview with warning chips on one button">
+  <p class="caption">A button with one problem title and one replacement
+  source still awaiting review.</p>
+</section>
+
+<section class="section" id="s9">
+  <h2><span class="num">9</span>Setup</h2>
+  <p>The Setup page is mainly meant for one-time setup:</p>
+  <h3>Addresses for the device</h3>
+  <p>Every button has its own address (as a QR code and as text), entered
+  once into the player or a podcast app. New titles then appear there on
+  their own afterward.</p>
+  <img class="shot" src="screenshots/user_manual/09-setup-adressen.png" alt="QR codes and addresses for each button">
+  <p class="caption">Every button gets its own address to enter once.</p>
+  <h3>Deactivating a button</h3>
+  <p>Is a button already playing external content (e.g. from an SD
+  card)? You can deactivate it here by clicking its QR code.
+  hoerbox-feeder then leaves it alone so nothing gets mixed up.</p>
+  <h3>Settings</h3>
+  <p>Five values can be adjusted here for the whole app:</p>
+  <img class="shot" src="screenshots/user_manual/08-setup-einstellungen.png" alt="The five settings cards: Maximum downloads, Maximum playlist length, Audio output, Language, Button display">
+  <table class="feed-table">
+    <tr><td><strong>Maximum downloads</strong></td><td>how many episodes of a playlist/podcast
+    load at most the first time – the rest follows automatically over
+    time.</td></tr>
+    <tr><td><strong>Maximum playlist length</strong></td><td>how many episodes are kept per
+    button at most – older episodes beyond that are automatically moved
+    to the library (not deleted).</td></tr>
+    <tr><td><strong>Audio output</strong></td><td>mono or stereo for new downloads.
+    Already-loaded titles keep their existing audio channels.</td></tr>
+    <tr><td><strong>Language</strong></td><td>German or English – switches the whole
+    interface, immediately after saving.</td></tr>
+    <tr><td><strong>Button display</strong></td><td>colored buttons (default) or numbered
+    buttons – shows all nine buttons neutral/gray with a number (1–9)
+    instead of a color name, for hörbert variants without colored
+    keys.</td></tr>
+  </table>
+  <p class="caption">In numbered-button mode, every button – shown here on
+  the home page – shows just a number instead of a color/color name.</p>
+  <img class="shot narrow" src="screenshots/user_manual/10-kanaltasten.png" alt="Home page in numbered-button mode: nine gray, numbered buttons">
+  <p>If YouTube downloads are being blocked, you can also upload a
+  YouTube access (cookies file) here – a green checkmark at the top of
+  the Setup page shows whether that's already set up.</p>
+</section>
+
+<section class="section" id="s10">
+  <h2><span class="num">10</span>Legal notice</h2>
+  <div class="callout legal">
+    Downloads from streaming platforms may violate their terms of
+    service and/or copyright. You are solely responsible for using
+    hoerbox-feeder only with content you're permitted to use – e.g.
+    podcasts with an open RSS feed, public-domain content, or your own
+    material.
+  </div>
+</section>
+
+<section class="section" id="s11">
+  <h2><span class="num">11</span>Questions &amp; help</h2>
+  <p>For questions, bugs, or ideas, the best contact is whoever set up
+  hoerbox-feeder for you.</p>
+</section>
+
+</body>
+</html>

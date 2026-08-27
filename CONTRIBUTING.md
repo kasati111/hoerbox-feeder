@@ -1,5 +1,7 @@
 # Mitwirken
 
+*[English version](CONTRIBUTING.en.md)*
+
 Danke für dein Interesse an hoerbox-feeder! Das ist ein kleines
 Hobby-Projekt, entsprechend informell läuft auch das Mitwirken.
 

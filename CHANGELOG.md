@@ -1,11 +1,20 @@
 # Changelog
 
+*[English version](CHANGELOG.en.md)*
+
 Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
 ### Hinzugefügt
+- Mehrsprachigkeit: komplette Oberfläche auf Deutsch oder Englisch, per
+  Setup-Seite umschaltbar (Setting „Sprache"), Default über die neue
+  ENV-Variable `LANG` steuerbar.
+- Kanal-Anzeige als „Kanaltasten": alternativ zu bunten Knöpfen können alle
+  neun Kanäle neutral/grau mit fortlaufender Nummer (1–9) statt Farbname
+  angezeigt werden, per Setup-Seite umschaltbar (Setting „Kanal-Anzeige") –
+  für hörbert-Varianten/Nachbauten ohne Farbtasten.
 - Globale Tonspur-Einstellung (Mono/Stereo) auf der Setup-Seite. Gilt für
   neue Downloads; bereits geladene Titel behalten ihre bisherige Tonspur.
 
