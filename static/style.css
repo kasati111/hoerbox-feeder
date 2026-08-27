@@ -360,7 +360,7 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
 
 /* Setup: global settings card */
 .settings-card { text-align: left; border-top: none; margin-bottom: 20px; }
-.settings-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.settings-row { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
 .settings-row input[type="number"] {
     width: 90px; padding: 10px; border: 2px solid #d5dbe2; border-radius: 8px;
     font-size: 1rem;
