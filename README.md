@@ -93,9 +93,16 @@ ebenfalls dort.
 - **Podcasts** – jeder offene RSS-Feed.
 - **Direkte Audio-Downloads** – z. B. [vorleser.net](https://vorleser.net)
   (siehe Screenshot oben).
-- Grundsätzlich funktioniert auch vieles von den mehreren hundert weiteren
-  Seiten, die yt-dlp unterstützt – YouTube/Spotify/Podcasts sind die
-  getesteten und empfohlenen Quellen.
+- Deutsche Kinder-/Familieninhalte, die yt-dlp per eigenem Extractor
+  unterstützt: u. a. **KiKA**, **ARD Audiothek**, **ARD Mediathek**, **ZDF**
+  (inkl. ZDFtivi).
+- Darüber hinaus grundsätzlich auch vieles von den mehreren hundert weiteren
+  Seiten, die yt-dlp unterstützt.
+
+Diese Aufzählung ist rein technisch gemeint (was yt-dlp extrahieren kann) –
+keine Empfehlung. Ob eine Nutzung im Einzelfall erlaubt ist, hängt von den
+Nutzungsbedingungen der jeweiligen Plattform ab, siehe
+["Wichtiger Hinweis zur Nutzung"](#wichtiger-hinweis-zur-nutzung) oben.
 
 ### RSS-URLs
 
