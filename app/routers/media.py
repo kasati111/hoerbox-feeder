@@ -27,13 +27,24 @@ def _safe_path(kanal: int, filename: str) -> Path:
     return path
 
 
-@router.get("/audio/{kanal}/{filename}")
+@router.api_route("/audio/{kanal}/{filename}", methods=["GET", "HEAD"])
 def get_audio(kanal: int, filename: str, request: Request):
     path = _safe_path(kanal, filename)
     if not path.exists() or not path.is_file():
         raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
 
     file_size = path.stat().st_size
+
+    if request.method == "HEAD":
+        # See feed_routes.py's HEAD handling for why this is needed: a
+        # device player commonly HEADs an enclosure URL (to check size
+        # before it starts a real download) before ever issuing the GET.
+        return Response(
+            status_code=200,
+            media_type="audio/mpeg",
+            headers={"Accept-Ranges": "bytes", "Content-Length": str(file_size)},
+        )
+
     range_header = request.headers.get("range") or request.headers.get("Range")
 
     if range_header is None:

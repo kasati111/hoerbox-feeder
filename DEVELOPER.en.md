@@ -265,6 +265,36 @@ The actual download happens via yt-dlp with a `ytsearch1:` query. This
 matters because spotdl has its own internal yt-dlp process that doesn't
 know about our cookies file or Node.js configuration.
 
+### 5.8 GET-only routes answer HEAD with 405 (starlette 1.x)
+
+In starlette < 1.0, a `HEAD` request was automatically accepted by any
+route that declares `GET` (falls back to the `GET` handler, body dropped).
+**In the starlette 1.x version used here, that no longer happens** — a
+route declaring only `@router.get(...)` answers `HEAD` with
+`405 Method Not Allowed`.
+
+Concretely this hit `GET /feed/{n}.xml` (`feed_routes.py`) and
+`GET /audio/{kanal}/{filename}` (`media.py`) — exactly the two endpoints a
+device/podcast client actually calls during sync. Many player
+implementations send a `HEAD` before downloading a new episode (checking
+file size/reachability before starting the real GET download). A 405 in
+response got read by the client as an error instead of falling back to
+GET — the new episode never synced, while episodes already downloaded
+earlier (no fresh HEAD needed) kept working unnoticed. That made the bug
+deceptive: it only showed up for freshly-added content, never for the rest
+of the already-synced library — from the outside it looked like "this one
+item won't sync," not a global API bug.
+
+**Fix:** both routes now explicitly declare `methods=["GET", "HEAD"]`
+(`@router.api_route(...)` instead of `@router.get(...)`) and handle
+`request.method == "HEAD"` separately — headers (in particular a correct
+`Content-Length`) as for GET, but no body. Regression test:
+`tests/test_head_requests.py`.
+
+For any new route a device/external client (not just the browser) calls
+directly: declare `HEAD` explicitly, don't rely on implicit framework
+behavior.
+
 ---
 
 ## 6. Configuration
