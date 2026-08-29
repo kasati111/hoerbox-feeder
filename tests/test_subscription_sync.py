@@ -60,6 +60,31 @@ def test_known_entries_are_skipped(db, patched):
     assert len(items) == 2  # only one new added
 
 
+def test_deleted_item_is_not_resurrected_by_next_sync(db, patched):
+    """Regression test: deleting an item that belongs to an active
+    subscription must stick -- the next periodic sync_subscription() run
+    must not treat the now-absent URL as new and silently re-add it."""
+    sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    _set_source(patched, [
+        SourceEntry("https://feed/x/1", "Folge 1"),
+        SourceEntry("https://feed/x/2", "Folge 2"),
+    ])
+    scheduler.sync_subscription(sub.id)
+    assert len(crud.list_items(db, 0)) == 2
+
+    deleted = crud.item_exists(db, 0, "https://feed/x/1")
+    crud.delete_item(db, deleted.id)
+    assert len(crud.list_items(db, 0)) == 1
+
+    # Same source, still lists both entries -- exactly what a real playlist
+    # sync would see, since deleting locally doesn't remove it upstream.
+    scheduler.sync_subscription(sub.id)
+
+    items = crud.list_items(db, 0)
+    assert len(items) == 1, "deleted item must not come back"
+    assert items[0].source_url == "https://feed/x/2"
+
+
 def test_retention_applied_on_sync(db, patched):
     crud.update_settings(db, max_playlist_length=2)
 

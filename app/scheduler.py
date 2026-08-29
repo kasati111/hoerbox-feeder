@@ -49,6 +49,8 @@ def sync_subscription(sub_id: int) -> None:
             # different channel or parked in the Bibliothek.
             if crud.subscription_item_exists(db, sub_id, entry.url):
                 continue
+            if crud.is_subscription_url_excluded(db, sub_id, entry.url):
+                continue
             item = crud.insert_into_block(
                 db, channel_id, sub_id, entry.url, entry.title
             )

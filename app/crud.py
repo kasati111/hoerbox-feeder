@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import config
-from .models import Channel, Item, Job, Settings, Subscription
+from .models import Channel, Item, Job, Settings, Subscription, SubscriptionExclusion
 
 
 # --- Channels ---------------------------------------------------------------
@@ -336,6 +336,13 @@ def delete_item(db: Session, item_id: int) -> Optional[Item]:
     item = db.get(Item, item_id)
     if item is None:
         return None
+    if item.subscription_id is not None:
+        # Record the deletion so sync_subscription() doesn't mistake "the
+        # user deleted this" for "never seen this" and silently re-add it
+        # on the next periodic sync (see SubscriptionExclusion).
+        db.add(SubscriptionExclusion(
+            subscription_id=item.subscription_id, source_url=item.source_url,
+        ))
     # remove any jobs tied to the item
     db.query(Job).filter(Job.item_id == item_id).delete()
     db.delete(item)
@@ -356,6 +363,12 @@ def delete_subscription(db: Session, sub_id: int) -> int:
     if item_ids:
         db.query(Job).filter(Job.item_id.in_(item_ids)).delete(synchronize_session=False)
         db.query(Item).filter(Item.id.in_(item_ids)).delete(synchronize_session=False)
+    # The subscription itself is going away, so no future sync_subscription()
+    # run will ever consult these tombstones again -- drop them rather than
+    # leaving them to accumulate forever.
+    db.query(SubscriptionExclusion).filter(
+        SubscriptionExclusion.subscription_id == sub_id
+    ).delete(synchronize_session=False)
     sub = db.get(Subscription, sub_id)
     if sub is not None:
         db.delete(sub)
@@ -643,6 +656,20 @@ def subscription_item_exists(db: Session, subscription_id: int, source_url: str)
         db.query(Item)
         .filter(Item.subscription_id == subscription_id, Item.source_url == source_url)
         .first()
+    )
+
+
+def is_subscription_url_excluded(db: Session, subscription_id: int, source_url: str) -> bool:
+    """True if this URL was explicitly deleted from this subscription before
+    (see SubscriptionExclusion) -- sync_subscription() must not re-add it."""
+    return (
+        db.query(SubscriptionExclusion)
+        .filter(
+            SubscriptionExclusion.subscription_id == subscription_id,
+            SubscriptionExclusion.source_url == source_url,
+        )
+        .first()
+        is not None
     )
 
 

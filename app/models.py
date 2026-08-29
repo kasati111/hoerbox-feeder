@@ -102,6 +102,22 @@ class Subscription(Base):
     items = relationship("Item", back_populates="subscription")
 
 
+class SubscriptionExclusion(Base):
+    """Tombstone for a source_url a user explicitly deleted from an active
+    subscription's items. Without this, sync_subscription() has no way to
+    tell "never downloaded" apart from "downloaded, then the user deleted
+    it" -- the deleted item's row is just gone, so the next periodic sync
+    sees that URL as new again and silently re-downloads it. Recorded by
+    crud.delete_item(); checked by scheduler.sync_subscription()."""
+
+    __tablename__ = "subscription_exclusion"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    subscription_id = Column(Integer, ForeignKey("subscription.id"), nullable=False)
+    source_url = Column(Text, nullable=False)
+    excluded_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Settings(Base):
     """Singleton row (id=1) for global, user-editable settings."""
 
