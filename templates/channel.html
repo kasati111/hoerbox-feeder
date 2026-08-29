@@ -40,6 +40,7 @@
                 <span class="item-time">{{ t('common.episodes', n=b.entries|length) }}</span>
             </div>
             <div class="block-actions">
+                <button type="button" class="ghost-btn block-rename-btn" data-sub-id="{{ b.subscription_id }}">{{ t('common.rename') }}</button>
                 <button type="button" class="ghost-btn block-to-library" data-sub-id="{{ b.subscription_id }}">{{ t('common.to_library') }}</button>
                 <select class="channel-select block-channel-select" data-sub-id="{{ b.subscription_id }}">
                     <option value="">{{ t('common.other_channel') }}</option>

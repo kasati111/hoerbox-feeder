@@ -57,6 +57,7 @@ STRINGS = {
     # --- Shared / cross-page --------------------------------------------------
     "common.back": {"de": "← Zurück", "en": "← Back"},
     "common.move": {"de": "Verschieben", "en": "Move"},
+    "common.rename": {"de": "Umbenennen", "en": "Rename"},
     "common.delete": {"de": "Löschen", "en": "Delete"},
     "common.cancel": {"de": "Abbrechen", "en": "Cancel"},
     "common.play": {"de": "Abspielen", "en": "Play"},
@@ -420,6 +421,8 @@ STRINGS = {
         "de": "{count} Folgen auf „{name}“ verschoben.",
         "en": "{count} episode{s} moved to “{name}”.",
     },
+    "api.subscription_renamed": {"de": "Gespeichert – Titel geändert.", "en": "Saved – title changed."},
+    "api.title_required": {"de": "Bitte einen Titel eingeben.", "en": "Please enter a title."},
     "api.abo_state": {
         "de": "Automatisches Holen ist jetzt {state}.",
         "en": "Automatic fetching is now {state}.",
@@ -613,6 +616,7 @@ STRINGS = {
         "de": "Wirklich ALLE Dateien dieses Kanals löschen?",
         "en": "Really delete ALL files of this button?",
     },
+    "js.prompt.rename_title": {"de": "Neuer Titel:", "en": "New title:"},
     "js.status.preparing": {"de": "Wird vorbereitet …", "en": "Preparing …"},
     "js.status.no_connection": {"de": "Keine Verbindung.", "en": "No connection."},
     "js.status.failed": {"de": "Ging nicht.", "en": "Failed."},

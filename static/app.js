@@ -596,6 +596,9 @@ const hoerbox = (function () {
         qa('.block-delete-btn').forEach(btn => {
             btn.addEventListener('click', () => deleteBlock(btn.dataset.subId));
         });
+        qa('.block-rename-btn').forEach(btn => {
+            btn.addEventListener('click', () => renameBlock(btn.dataset.subId));
+        });
 
         const abo = q('#abo-toggle');
         if (abo) {
@@ -884,6 +887,28 @@ const hoerbox = (function () {
             }
         } catch (e) {
             toast(i18n('js.toast.could_not_delete'));
+        }
+    }
+
+    async function renameBlock(subId) {
+        const li = document.querySelector('.item.block[data-sub-id="' + subId + '"]');
+        const titleEl = li ? li.querySelector('.item-title') : null;
+        const next = prompt(i18n('js.prompt.rename_title'), titleEl ? titleEl.textContent : '');
+        if (next === null) return;  // cancelled
+        const title = next.trim();
+        if (!title) return;
+        try {
+            const res = await fetch('/api/subscription/' + subId + '/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title })
+            }).then(r => r.json());
+            toast(res.message);
+            if (res.ok && titleEl) {
+                titleEl.textContent = res.title;
+            }
+        } catch (e) {
+            toast(i18n('js.toast.could_not_save'));
         }
     }
 

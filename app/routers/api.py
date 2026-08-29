@@ -669,6 +669,22 @@ def assign_subscription(sub_id: int, payload: AssignRequest, request: Request,
     )}
 
 
+class RenameSubscriptionRequest(BaseModel):
+    title: str
+
+
+@router.post("/subscription/{sub_id}/rename")
+def rename_subscription(sub_id: int, payload: RenameSubscriptionRequest, db: Session = Depends(get_db)):
+    lang, _skin = crud.lang_skin(db)
+    if crud.get_subscription(db, sub_id) is None:
+        raise HTTPException(status_code=404, detail=i18n.t("api.subscription_not_found", lang))
+    title = payload.title.strip()
+    if not title:
+        return {"ok": False, "message": i18n.t("api.title_required", lang)}
+    crud.update_subscription(db, sub_id, title=title)
+    return {"ok": True, "message": i18n.t("api.subscription_renamed", lang), "title": title}
+
+
 class AboToggleRequest(BaseModel):
     enabled: bool
 
