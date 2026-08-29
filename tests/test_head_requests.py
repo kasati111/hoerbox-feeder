@@ -7,11 +7,12 @@ auto-add HEAD support for a GET-only route (see DEVELOPER.md §5.1/§5.8). That
 made a newly-synced item silently fail to reach the device while everything
 already downloaded earlier kept working, since only new episodes get probed.
 """
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 from app import config
 from app.database import get_db
 from app.routers import feed_routes, media
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 
 def _client(db, tmp_path, monkeypatch):
