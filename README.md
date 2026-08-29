@@ -5,14 +5,14 @@
 [![CI](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-Selbst-gehostete Web-App: per Browser einen Medien-Link einfügen (YouTube,
-Spotify, Podcast, ...), der Server lädt den Inhalt herunter, wandelt ihn in
-ein einheitliches, normalisiertes MP3-Format um und stellt ihn als
-Podcast-RSS-Feed bereit – einmal die Feed-Adresse im Zielgerät eintragen,
-danach kommen neue Folgen bei Playlists/Abos automatisch nach.
+**Aus jedem Link ein Hörspiel für die Hörbox, ohne Gefummel mit SD-Karten.**
+
+Selbst-gehostete Web-App: Link einfügen (YouTube, Spotify, Podcast, ...) –
+Download, MP3-Konvertierung und Podcast-Feed laufen automatisch. Einmal im
+Zielgerät eingerichtet, kommen neue Folgen von selbst nach.
 
 Damit lässt sich eine Hörbox automatisch verwalten – **kein Kabel, kein
-SD-Karten-Gefummel, kein Dateiname-Sortieren**, nur ein Browser und ein Link.
+Dateiname-Sortieren**, nur ein Browser und ein Link.
 
 <p>
   <img src="docs/screenshots/start.png" alt="Startseite: Link einfügen und Kanal wählen" width="46%" style="margin-right: 4%;">

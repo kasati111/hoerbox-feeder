@@ -5,15 +5,14 @@
 [![CI](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml/badge.svg)](https://github.com/kasati111/hoerbox-feeder/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-Self-hosted web app: paste a media link in your browser (YouTube, Spotify,
-podcast, ...), the server downloads the content, converts it to a
-consistent, normalized MP3 format, and serves it as a podcast RSS feed –
-enter the feed address once on the target device, and new episodes for
-playlists/subscriptions arrive automatically after that.
+**Turn any link into an audio story for your player – no SD-card hassle.**
+
+Self-hosted web app: paste a link (YouTube, Spotify, podcast, ...) –
+downloading, MP3 conversion, and the podcast feed happen automatically.
+Set up once on the target device, and new episodes arrive on their own.
 
 This lets you manage a children's audio player automatically – **no cables,
-no fiddling with SD cards, no sorting filenames**, just a browser and a
-link.
+no sorting filenames**, just a browser and a link.
 
 <p>
   <img src="docs/screenshots/start.png" alt="Home page: paste a link and choose a button" width="46%" style="margin-right: 4%;">
