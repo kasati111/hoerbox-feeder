@@ -27,8 +27,18 @@ def _set_source(monkeypatch, entries):
     monkeypatch.setattr(scheduler.downloader, "analyze", lambda url, lang="de": info)
 
 
+def test_new_subscription_starts_disabled(db):
+    """Auto-fetching new episodes on the origin channel is opt-in -- a
+    freshly created subscription must not sync until the user turns the
+    abo toggle on."""
+    sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    assert sub.enabled == 0
+    assert sub not in crud.list_enabled_subscriptions(db)
+
+
 def test_new_entries_are_queued(db, patched):
     sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    crud.set_subscription_enabled_by_id(db, sub.id, True)
     _set_source(patched, [
         SourceEntry("https://feed/x/1", "Folge 1"),
         SourceEntry("https://feed/x/2", "Folge 2"),
@@ -46,6 +56,7 @@ def test_new_entries_are_queued(db, patched):
 
 def test_known_entries_are_skipped(db, patched):
     sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    crud.set_subscription_enabled_by_id(db, sub.id, True)
     # pre-existing item
     crud.create_item(db, 0, "https://feed/x/1", "Folge 1", subscription_id=sub.id)
 
@@ -65,6 +76,7 @@ def test_deleted_item_is_not_resurrected_by_next_sync(db, patched):
     subscription must stick -- the next periodic sync_subscription() run
     must not treat the now-absent URL as new and silently re-add it."""
     sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    crud.set_subscription_enabled_by_id(db, sub.id, True)
     _set_source(patched, [
         SourceEntry("https://feed/x/1", "Folge 1"),
         SourceEntry("https://feed/x/2", "Folge 2"),
@@ -89,6 +101,7 @@ def test_retention_applied_on_sync(db, patched):
     crud.update_settings(db, max_playlist_length=2)
 
     sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    crud.set_subscription_enabled_by_id(db, sub.id, True)
     _set_source(patched, [
         SourceEntry(f"https://feed/x/{i}", f"Folge {i}") for i in range(1, 6)
     ])

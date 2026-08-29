@@ -629,6 +629,9 @@ def create_subscription(
     db: Session, channel_id: int, source_url: str, sub_type: str,
     interval_hours: int = None, title: Optional[str] = None,
 ) -> Subscription:
+    """New subscriptions start with enabled=0 -- auto-fetching new episodes
+    on the origin channel is opt-in, the user turns it on via the abo
+    toggle on the channel page if they want it."""
     existing = subscription_exists(db, channel_id, source_url)
     if existing:
         return existing
@@ -637,7 +640,7 @@ def create_subscription(
         source_url=source_url,
         type=sub_type,
         interval_hours=interval_hours or config.DEFAULT_INTERVAL_HOURS,
-        enabled=1,
+        enabled=0,
         title=title,
     )
     db.add(sub)
