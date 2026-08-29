@@ -1,10 +1,7 @@
 """Tests for large playlist limiting functionality."""
 from unittest.mock import MagicMock
 
-import pytest
-
 from app import config, crud, downloader
-from app.database import get_db
 from app.routers.api import AddRequest, add_content
 
 

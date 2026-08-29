@@ -2,7 +2,6 @@
 from contextlib import contextmanager
 
 import pytest
-
 from app import crud, scheduler
 from app.downloader import SourceEntry, SourceInfo
 
