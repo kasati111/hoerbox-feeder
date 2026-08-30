@@ -270,12 +270,10 @@ def logs_content(lines: int = 300):
     duplicated rather than shared since it's a handful of lines and the
     two live in genuinely different route modules (HTML page vs. JSON API).
     """
-    from ..main import LOG_PATH  # local import: main imports this router, avoid a cycle
-
     lines = max(10, min(lines, 2000))
     content = ""
-    if LOG_PATH.exists():
-        all_lines = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+    if config.LOG_PATH.exists():
+        all_lines = config.LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
         content = "\n".join(reversed(all_lines[-lines:]))
     return {"content": content}
 

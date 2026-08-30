@@ -368,12 +368,10 @@ def logs_page(request: Request, lines: int = 300, db: Session = Depends(get_db))
     survives restarts, capped at ~6MB total across current + 2 backups so
     it never grows unbounded.
     """
-    from ..main import LOG_PATH  # local import: main imports this router, avoid a cycle
-
     lines = max(10, min(lines, 2000))
     content = ""
-    if LOG_PATH.exists():
-        all_lines = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+    if config.LOG_PATH.exists():
+        all_lines = config.LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
         # Newest first -- the point of this page is "what just happened",
         # which otherwise means scrolling past everything old to find it.
         content = "\n".join(reversed(all_lines[-lines:]))

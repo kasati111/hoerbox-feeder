@@ -25,8 +25,7 @@ _stream_handler = logging.StreamHandler(sys.stdout)
 _stream_handler.setFormatter(_formatter)
 
 config.ensure_dirs()
-LOG_PATH = config.DB_DIR / "app.log"  # lives on the persisted db volume, survives rebuilds
-_file_handler = RotatingFileHandler(LOG_PATH, maxBytes=2_000_000, backupCount=2, encoding="utf-8")
+_file_handler = RotatingFileHandler(config.LOG_PATH, maxBytes=2_000_000, backupCount=2, encoding="utf-8")
 _file_handler.setFormatter(_formatter)
 
 logging.basicConfig(level=logging.INFO, handlers=[_stream_handler, _file_handler])

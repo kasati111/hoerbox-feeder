@@ -33,6 +33,12 @@ DB_DIR = Path(os.getenv("DB_DIR", str(DATA_DIR / "db")))
 # name; renaming the default here would make the app silently start a
 # fresh, empty database on the next update instead of finding it.
 DB_PATH = Path(os.getenv("DB_PATH", str(DB_DIR / "hoerbert.sqlite3")))
+# Lives here (not in main.py, where the RotatingFileHandler is actually set
+# up) so routes/tests can reference the path without importing main.py --
+# that module's own import triggers ensure_dirs() further down, which tries
+# to create DATA_DIR ("/data" by default) and fails outside a container
+# that has it as a writable volume (e.g. a CI runner).
+LOG_PATH = DB_DIR / "app.log"
 
 # --- Network ----------------------------------------------------------------
 HOST = os.getenv("HOST", "0.0.0.0")  # LAN bind only; never expose to WAN.
