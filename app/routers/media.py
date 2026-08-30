@@ -2,6 +2,7 @@
 
 Range support and a correct Content-Length are required by the device player.
 """
+import logging
 import re
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from .. import config
 
 router = APIRouter()
+
+logger = logging.getLogger("hoerbox.media")
 
 _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 _CHUNK = 1024 * 256
@@ -34,6 +37,16 @@ def get_audio(kanal: int, filename: str, request: Request):
         raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
 
     file_size = path.stat().st_size
+
+    logger.info(
+        "audio_access kanal=%s filename=%s method=%s range=%s client=%s ua=%s",
+        kanal,
+        filename,
+        request.method,
+        request.headers.get("range") or "-",
+        request.client.host if request.client else "?",
+        request.headers.get("user-agent") or "-",
+    )
 
     if request.method == "HEAD":
         # See feed_routes.py's HEAD handling for why this is needed: a
