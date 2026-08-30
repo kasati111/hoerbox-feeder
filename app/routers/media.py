@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 
 from .. import config
+from ..device_fingerprint import client_info
 
 router = APIRouter()
 
@@ -19,18 +20,12 @@ _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 _CHUNK = 1024 * 256
 
 
-def _client_info(request: Request) -> str:
-    client = request.client.host if request.client else "?"
-    ua = request.headers.get("user-agent") or "-"
-    return f"client={client} ua={ua}"
-
-
 def _safe_path(kanal: int, filename: str, request: Request) -> Path:
     # prevent path traversal
     if "/" in filename or ".." in filename or "\\" in filename:
         logger.warning(
             "audio_rejected kanal=%s filename=%s reason=invalid_filename %s",
-            kanal, filename, _client_info(request),
+            kanal, filename, client_info(request),
         )
         raise HTTPException(status_code=400, detail="Ungültiger Dateiname.")
     path = (config.AUDIO_DIR / str(kanal) / filename).resolve()
@@ -38,7 +33,7 @@ def _safe_path(kanal: int, filename: str, request: Request) -> Path:
     if not str(path).startswith(str(root)):
         logger.warning(
             "audio_rejected kanal=%s filename=%s reason=invalid_path %s",
-            kanal, filename, _client_info(request),
+            kanal, filename, client_info(request),
         )
         raise HTTPException(status_code=400, detail="Ungültiger Pfad.")
     return path
@@ -50,7 +45,7 @@ def get_audio(kanal: int, filename: str, request: Request):
     if not path.exists() or not path.is_file():
         logger.warning(
             "audio_rejected kanal=%s filename=%s reason=not_found %s",
-            kanal, filename, _client_info(request),
+            kanal, filename, client_info(request),
         )
         raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
 
@@ -59,7 +54,7 @@ def get_audio(kanal: int, filename: str, request: Request):
 
     logger.info(
         "audio_access kanal=%s filename=%s method=%s range=%s %s",
-        kanal, filename, request.method, range_header or "-", _client_info(request),
+        kanal, filename, request.method, range_header or "-", client_info(request),
     )
 
     if request.method == "HEAD":
@@ -80,7 +75,7 @@ def get_audio(kanal: int, filename: str, request: Request):
         if not match:
             logger.warning(
                 "audio_rejected kanal=%s filename=%s reason=range_unparseable range=%s %s",
-                kanal, filename, range_header, _client_info(request),
+                kanal, filename, range_header, client_info(request),
             )
             raise HTTPException(status_code=416, detail="Range nicht verarbeitbar.")
 
@@ -92,7 +87,7 @@ def get_audio(kanal: int, filename: str, request: Request):
             logger.warning(
                 "audio_rejected kanal=%s filename=%s reason=range_not_satisfiable "
                 "range=%s file_size=%s %s",
-                kanal, filename, range_header, file_size, _client_info(request),
+                kanal, filename, range_header, file_size, client_info(request),
             )
             return Response(
                 status_code=416,
@@ -101,7 +96,7 @@ def get_audio(kanal: int, filename: str, request: Request):
         status_code = 206
 
     length = end - start + 1
-    client_info = _client_info(request)
+    client_desc = client_info(request)
 
     def iterfile():
         sent = 0
@@ -125,12 +120,12 @@ def get_audio(kanal: int, filename: str, request: Request):
             if sent < length:
                 logger.warning(
                     "audio_transfer_incomplete kanal=%s filename=%s sent=%s of=%s %s",
-                    kanal, filename, sent, length, client_info,
+                    kanal, filename, sent, length, client_desc,
                 )
             else:
                 logger.info(
                     "audio_transfer_complete kanal=%s filename=%s bytes=%s %s",
-                    kanal, filename, sent, client_info,
+                    kanal, filename, sent, client_desc,
                 )
 
     headers = {
