@@ -13,6 +13,18 @@ router = APIRouter()
 logger = logging.getLogger("hoerbox.media")
 
 
+def _conditional_headers(request: Request) -> str:
+    # Reverse-engineering aid: does the device send If-Modified-Since /
+    # If-None-Match on repeat feed polls? If it does and we ever start
+    # honoring them with a 304, that tells us whether it re-parses the
+    # feed body on every poll or trusts a cached copy -- which would
+    # explain a stale/removed episode staying in its queue regardless of
+    # how often it re-fetches (see the "Abstract Beauty" investigation).
+    ims = request.headers.get("if-modified-since") or "-"
+    inm = request.headers.get("if-none-match") or "-"
+    return f"if_modified_since={ims} if_none_match={inm}"
+
+
 @router.api_route("/feed/{n}.xml", methods=["GET", "HEAD"])
 def get_feed(n: int, request: Request, db: Session = Depends(get_db)):
     if n < 0 or n > 8 or crud.get_channel(db, n) is None:
@@ -24,8 +36,8 @@ def get_feed(n: int, request: Request, db: Session = Depends(get_db)):
     base_url = str(request.base_url).rstrip("/")
     xml = feed.build_feed_xml(db, n, base_url)
     logger.info(
-        "feed_access kanal=%s method=%s %s",
-        n, request.method, client_info(request),
+        "feed_access kanal=%s method=%s %s %s",
+        n, request.method, client_info(request), _conditional_headers(request),
     )
     if request.method == "HEAD":
         # Some device/podcast clients HEAD-probe a feed (or a new episode's

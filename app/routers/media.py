@@ -4,6 +4,7 @@ Range support and a correct Content-Length are required by the device player.
 """
 import logging
 import re
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
@@ -18,6 +19,31 @@ logger = logging.getLogger("hoerbox.media")
 
 _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 _CHUNK = 1024 * 256
+
+# In-memory only, per (kanal, filename) -- reverse-engineering aid for the
+# device's retry behaviour on a 404 (e.g. a stale enclosure it kept in its
+# own queue after the episode was deleted server-side): each "not_found"
+# rejection logs the gap since the last one for the same file, so the
+# retry interval/backoff pattern shows up directly in the log without
+# manually diffing timestamps. Not meant to survive a restart.
+_last_not_found_at: dict = {}
+
+
+def _retry_gap(kanal: int, filename: str) -> str:
+    key = (kanal, filename)
+    now = datetime.utcnow()
+    prev = _last_not_found_at.get(key)
+    _last_not_found_at[key] = now
+    if prev is None:
+        return "since_last=first"
+    total_s = int((now - prev).total_seconds())
+    if total_s < 60:
+        return f"since_last={total_s}s"
+    m, s = divmod(total_s, 60)
+    if m < 60:
+        return f"since_last={m}m{s}s"
+    h, m = divmod(m, 60)
+    return f"since_last={h}h{m}m"
 
 
 def _safe_path(kanal: int, filename: str, request: Request) -> Path:
@@ -44,8 +70,8 @@ def get_audio(kanal: int, filename: str, request: Request):
     path = _safe_path(kanal, filename, request)
     if not path.exists() or not path.is_file():
         logger.warning(
-            "audio_rejected kanal=%s filename=%s reason=not_found %s",
-            kanal, filename, client_info(request),
+            "audio_rejected kanal=%s filename=%s reason=not_found %s %s",
+            kanal, filename, client_info(request), _retry_gap(kanal, filename),
         )
         raise HTTPException(status_code=404, detail="Datei nicht gefunden.")
 
