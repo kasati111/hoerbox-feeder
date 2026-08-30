@@ -345,6 +345,10 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
 }
 
 /* Logs page */
+.log-live-indicator {
+    display: inline-block; font-size: .8rem; font-weight: 700;
+    color: #2e9e4c;
+}
 .log-box {
     background: #1c2733; color: #d7e0ea; border-radius: var(--radius);
     padding: 16px; margin-top: 16px; font-family: "SF Mono", Consolas, monospace;

@@ -1147,5 +1147,38 @@ const hoerbox = (function () {
         location.reload();
     }
 
-    return { initIndex, initChannel, initBelegung, initBibliothek, initSetup };
+    // ---- Logs page: auto-refresh, newest lines on top --------------------
+    function initLogs() {
+        const box = q('#log-box');
+        if (!box) return;
+        const lines = box.dataset.lines || 300;
+        let timer = null;
+
+        async function refresh() {
+            try {
+                const res = await fetch('/api/logs?lines=' + lines).then(r => r.json());
+                if (res.content) box.textContent = res.content;
+            } catch (e) {
+                // Transient network hiccup -- keep showing what we have and
+                // just try again on the next tick.
+            }
+        }
+
+        function start() {
+            if (timer) return;
+            refresh();
+            timer = setInterval(refresh, 4000);
+        }
+        function stop() {
+            if (timer) { clearInterval(timer); timer = null; }
+        }
+
+        // Don't keep polling a backgrounded tab.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stop(); else start();
+        });
+        start();
+    }
+
+    return { initIndex, initChannel, initBelegung, initBibliothek, initSetup, initLogs };
 })();

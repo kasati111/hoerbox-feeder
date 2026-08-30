@@ -6,10 +6,15 @@
     <h1>{{ t('logs.h1') }}</h1>
     <p class="hint">{{ t('logs.hint', lines=lines) }}</p>
 
-    <a href="/logs" class="export-btn">{{ t('logs.refresh') }}</a>
+    <span class="log-live-indicator" id="log-live">{{ t('logs.live_indicator') }}</span>
 
-    <pre class="log-box">{{ content or t('logs.empty') }}</pre>
+    <pre class="log-box" id="log-box" data-lines="{{ lines }}">{{ content or t('logs.empty') }}</pre>
 
     <a href="/einrichtung" class="back-link">{{ t('logs.back_to_setup') }}</a>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>hoerbox.initLogs();</script>
 {% endblock %}

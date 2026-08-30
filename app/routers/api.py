@@ -261,6 +261,25 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/logs")
+def logs_content(lines: int = 300):
+    """Polled by the /logs page to auto-refresh without a full reload.
+
+    Mirrors app.routers.ui.logs_page()'s line-reading (same file, same
+    newest-first order, same cap) but returns just the text -- kept
+    duplicated rather than shared since it's a handful of lines and the
+    two live in genuinely different route modules (HTML page vs. JSON API).
+    """
+    from ..main import LOG_PATH  # local import: main imports this router, avoid a cycle
+
+    lines = max(10, min(lines, 2000))
+    content = ""
+    if LOG_PATH.exists():
+        all_lines = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
+        content = "\n".join(reversed(all_lines[-lines:]))
+    return {"content": content}
+
+
 @router.delete("/job/{job_id}")
 def cancel_job(job_id: int, db: Session = Depends(get_db)):
     """Cancel a queued or running job."""

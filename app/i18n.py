@@ -319,7 +319,7 @@ STRINGS = {
         "en": "The last {lines} lines. Meant for troubleshooting — no user "
               "data, just technical messages.",
     },
-    "logs.refresh": {"de": "↻ Aktualisieren", "en": "↻ Refresh"},
+    "logs.live_indicator": {"de": "● läuft live", "en": "● updating live"},
     "logs.empty": {"de": "Noch keine Log-Einträge.", "en": "No log entries yet."},
     "logs.back_to_setup": {"de": "← Zurück zu Setup", "en": "← Back to Setup"},
 

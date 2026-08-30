@@ -374,7 +374,9 @@ def logs_page(request: Request, lines: int = 300, db: Session = Depends(get_db))
     content = ""
     if LOG_PATH.exists():
         all_lines = LOG_PATH.read_text(encoding="utf-8", errors="replace").splitlines()
-        content = "\n".join(all_lines[-lines:])
+        # Newest first -- the point of this page is "what just happened",
+        # which otherwise means scrolling past everything old to find it.
+        content = "\n".join(reversed(all_lines[-lines:]))
     ctx = {
         "request": request,
         "content": content,
