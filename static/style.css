@@ -130,7 +130,9 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
 .color-btn .count-chip {
     display: inline-block; padding: 1px 8px; border-radius: 999px;
     background: #eef1f4; color: #5a6672; font-size: .72rem; font-weight: 700;
+    cursor: pointer;
 }
+.color-btn .count-chip:hover { background: #e0e5ea; }
 
 .add-btn, .retry-btn, .cancel-btn, #delete-btn {
     width: 100%;
@@ -194,6 +196,11 @@ h1 { font-size: 1.5rem; margin: 0 0 18px; }
 .item:target { outline: 2px solid var(--accent); }
 .item-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .item .outer-handle, .item .inner-handle { cursor: grab; font-size: 1.4rem; color: var(--muted); touch-action: none; }
+.item-position {
+    min-width: 22px; text-align: center; flex-shrink: 0;
+    font-size: .78rem; font-weight: 700; color: var(--muted);
+}
+.item-position.over-limit { color: #f44336; }
 .item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .item-title { font-weight: 600; word-break: break-word; }
 .item-filename { font-size: .75rem; color: var(--muted); word-break: break-all; }

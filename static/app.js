@@ -81,6 +81,16 @@ const hoerbox = (function () {
             });
         });
 
+        // The count chip is a deep link to that channel's edit page -- stop
+        // the click from bubbling to the parent .color-btn (which would
+        // select the channel for adding instead of navigating away).
+        qa('.count-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.location.href = '/kanal/' + chip.dataset.channel;
+            });
+        });
+
         urlInput.addEventListener('input', updateAddState);
         addBtn.addEventListener('click', () => submitAdd(false));
 
@@ -120,7 +130,7 @@ const hoerbox = (function () {
         restoreJobsFromStorage();
     }
 
-    async function submitAdd(confirmEvict, evictMode) {
+    async function submitAdd(confirmEvict) {
         const url = q('#url').value.trim();
         const statusBox = q('#status');
         const statusText = q('#status-text');
@@ -145,8 +155,7 @@ const hoerbox = (function () {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: url, channel: selectedChannel,
-                    confirm_evict: !!confirmEvict,
-                    evict_mode: evictMode || 'library'
+                    confirm_evict: !!confirmEvict
                 })
             }).then(r => r.json());
         } catch (e) {
@@ -160,9 +169,9 @@ const hoerbox = (function () {
         }
 
         if (res.needs_confirmation) {
-            showEvictDialog(res.message, (mode) => {
-                if (mode) {
-                    submitAdd(true, mode);
+            showEvictDialog(res.message, (confirmed) => {
+                if (confirmed) {
+                    submitAdd(true);
                 } else {
                     // Abbruch: kein Download, keine Änderung.
                     statusBox.hidden = true;
@@ -388,29 +397,22 @@ const hoerbox = (function () {
         clearJobsFromStorage(jobIds);
     }
 
-    function showEvictDialog(message, onChoice, hideDelete) {
+    // Overflow from adding always moves to the Bibliothek -- never deletes,
+    // so this only ever asks "move, or cancel the add?", not which way.
+    function showEvictDialog(message, onChoice) {
         const dialog = q('#evict-dialog');
         const libraryBtn = q('#evict-library-btn');
-        const deleteBtn = q('#evict-delete-btn');
         const cancelBtn = q('#evict-cancel-btn');
         q('#evict-message').textContent = message;
-        deleteBtn.hidden = !!hideDelete;
         dialog.hidden = false;
 
         function cleanup() {
             dialog.hidden = true;
-            deleteBtn.hidden = false;
             libraryBtn.onclick = null;
-            deleteBtn.onclick = null;
             cancelBtn.onclick = null;
         }
-        libraryBtn.onclick = () => { cleanup(); onChoice('library'); };
-        deleteBtn.onclick = () => {
-            if (!confirm(i18n('js.confirm.delete_forever'))) return;
-            cleanup();
-            onChoice('delete');
-        };
-        cancelBtn.onclick = () => { cleanup(); onChoice(null); };
+        libraryBtn.onclick = () => { cleanup(); onChoice(true); };
+        cancelBtn.onclick = () => { cleanup(); onChoice(false); };
     }
 
     function showError(msg, retryBtn, statusText, itemId, jobId) {
@@ -1137,9 +1139,9 @@ const hoerbox = (function () {
             body: JSON.stringify({ active: active, move_to_library: !!moveToLibrary })
         }).then(r => r.json());
         if (res.needs_confirmation) {
-            showEvictDialog(res.message, mode => {
-                if (mode === 'library') toggleChannelActive(channelId, false, true);
-            }, true);
+            showEvictDialog(res.message, confirmed => {
+                if (confirmed) toggleChannelActive(channelId, false, true);
+            });
             return;
         }
         location.reload();

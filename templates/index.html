@@ -32,7 +32,7 @@
                 style="--btn-color: {{ channel_color_hex(ch) }};">
             <span class="dot"></span>
             <span class="name">{{ channel_label(ch) }}</span>
-            <span class="count-chip">{{ item_counts.get(ch.id, 0) }}</span>
+            <span class="count-chip" data-channel="{{ ch.id }}" title="{{ t('index.count_chip_title') }}">{{ item_counts.get(ch.id, 0) }}</span>
         </button>
         {% endfor %}
     </div>
@@ -90,7 +90,6 @@
     <div class="modal-box">
         <p id="evict-message"></p>
         <button type="button" id="evict-library-btn" class="add-btn">{{ t('index.evict_move') }}</button>
-        <button type="button" id="evict-delete-btn" class="cancel-btn">{{ t('index.evict_delete') }}</button>
         <button type="button" id="evict-cancel-btn" class="ghost-btn modal-cancel">{{ t('common.cancel') }}</button>
     </div>
 </div>

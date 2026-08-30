@@ -79,6 +79,9 @@ STRINGS = {
     "index.paste_title": {"de": "Aus Zwischenablage einfügen", "en": "Paste from clipboard"},
     "index.clear_title": {"de": "Eingabe löschen", "en": "Clear input"},
     "index.channel_label": {"de": "Auf welchen Knopf?", "en": "Which button?"},
+    "index.count_chip_title": {
+        "de": "Zur Kanalübersicht", "en": "Go to channel page",
+    },
     "index.add_btn": {"de": "Hinzufügen", "en": "Add"},
     "index.cancel_btn": {"de": "Abbrechen", "en": "Cancel"},
     "index.retry_btn": {"de": "Nochmal versuchen", "en": "Try again"},
@@ -119,7 +122,6 @@ STRINGS = {
         "en": "Review individually under <a href=\"/bearbeiten\">Edit</a>.",
     },
     "index.evict_move": {"de": "In Bibliothek verschieben", "en": "Move to library"},
-    "index.evict_delete": {"de": "Endgültig löschen", "en": "Delete permanently"},
 
     # --- channel.html -----------------------------------------------------------
     "channel.playtime_total": {"de": "Gesamte Spielzeit:", "en": "Total playtime:"},
@@ -141,6 +143,13 @@ STRINGS = {
 
     # --- _item_row.html -----------------------------------------------------------
     "item.handle_title": {"de": "Verschieben", "en": "Drag to reorder"},
+    "item.position_title": {
+        "de": "Position in der Wiedergabeliste", "en": "Position in the playback order",
+    },
+    "item.position_over_limit_title": {
+        "de": "Passt nicht mehr auf das Gerät (Limit: {limit} Titel)",
+        "en": "Won't fit on the device (limit: {limit} tracks)",
+    },
     "item.alt_review_chip": {
         "de": "⟳ andere Quelle – bitte prüfen",
         "en": "⟳ alternate source – please check",
@@ -599,10 +608,6 @@ STRINGS = {
               "nicht rückgängig gemacht werden.",
         "en": "Really permanently delete this whole playlist? This cannot "
               "be undone.",
-    },
-    "js.confirm.delete_forever": {
-        "de": "Wirklich endgültig löschen? Das kann nicht rückgängig gemacht werden.",
-        "en": "Really delete permanently? This cannot be undone.",
     },
     "js.confirm.delete_file": {
         "de": "\"{filename}\" wirklich löschen?",

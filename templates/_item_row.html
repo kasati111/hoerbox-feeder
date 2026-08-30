@@ -8,6 +8,10 @@
    100% of its parent's content box, no flex math involved. #}
 <div class="item-row">
 <span class="{{ 'inner-handle' if item.is_sub else 'outer-handle' }}" title="{{ t('item.handle_title') }}">≡</span>
+{% if item.position %}
+<span class="item-position {{ 'over-limit' if item.over_limit else '' }}"
+      title="{{ t('item.position_over_limit_title', limit=item.limit) if item.over_limit else t('item.position_title') }}">{{ item.position }}</span>
+{% endif %}
 <div class="item-main">
     <span class="item-title">{{ item.title }}</span>
     {% if item.needs_alt_review %}

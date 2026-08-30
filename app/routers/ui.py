@@ -119,7 +119,8 @@ def index(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(request, "index.html", ctx)
 
 
-def _item_view(item, jobs_by_item, is_sub: bool, lang: str, channel_id: int = None, context_title: str = None) -> dict:
+def _item_view(item, jobs_by_item, is_sub: bool, lang: str, channel_id: int = None,
+                context_title: str = None, position: int = None, limit: int = None) -> dict:
     job = jobs_by_item.get(item.id)
     next_attempt_str = None
     if job and job.next_attempt_at and job.next_attempt_at > datetime.utcnow():
@@ -131,6 +132,13 @@ def _item_view(item, jobs_by_item, is_sub: bool, lang: str, channel_id: int = No
         "title": item.title,
         "filename": item.filename,
         "channel_id": channel_id if channel_id is not None else item.channel_id,
+        # 1-based position in this channel's playback order, across block/
+        # single boundaries -- each item is its own file/track slot on the
+        # device, so this doubles as "how many of the max_playlist_length
+        # slots does this fill" (see over_limit below).
+        "position": position,
+        "over_limit": position is not None and limit is not None and position > limit,
+        "limit": limit,
         "playtime": _fmt_playtime(item.duration_seconds, lang),
         "status": item.status,
         "error_text": item.error_text,
@@ -171,19 +179,26 @@ def channel_detail(n: int, request: Request, db: Session = Depends(get_db)):
     # a dict key called "items" shadows Python dict's built-in .items() method
     # when accessed as b.items in Jinja2 (attribute lookup wins over
     # subscript), which silently breaks template rendering.
+    # Each item is its own file/track slot on the device -- number them 1..N
+    # across the whole channel (block/single boundaries don't matter for
+    # this) so the "Bearbeiten" page shows at a glance how many of the
+    # settings.max_playlist_length slots are filled.
+    limit = settings.max_playlist_length
     blocks = []
-    for item in items:
+    for position, item in enumerate(items, start=1):
         context_title = sub_titles.get(item.subscription_id)
         if (blocks and item.subscription_id is not None
                 and blocks[-1]["subscription_id"] == item.subscription_id):
             blocks[-1]["entries"].append(
-                _item_view(item, jobs_by_item, is_sub=True, lang=lang, channel_id=n, context_title=context_title)
+                _item_view(item, jobs_by_item, is_sub=True, lang=lang, channel_id=n,
+                           context_title=context_title, position=position, limit=limit)
             )
         else:
             is_block = item.subscription_id is not None
             entry_view = _item_view(
                 item, jobs_by_item, is_sub=is_block, lang=lang,
                 channel_id=n, context_title=context_title,
+                position=position, limit=limit,
             )
             blocks.append({
                 "subscription_id": item.subscription_id,

@@ -31,8 +31,10 @@ def _base_url(request: Request) -> str:
 class AddRequest(BaseModel):
     url: str
     channel: int
+    # A resubmission after needs_confirmation=True -- overflow from adding
+    # always moves to the Bibliothek (never deletes, see the eviction block
+    # below), so there is no accompanying "mode" to choose.
     confirm_evict: bool = False
-    evict_mode: str = "library"  # "library" | "delete"
 
 
 @router.post("/add")
@@ -89,49 +91,49 @@ def add_content(payload: AddRequest, request: Request, db: Session = Depends(get
     is_series = info.is_series
     sub_id = None
 
-    # Whole-playlist adds may need to make room under the global "maximale
-    # Playlistlänge" setting. Never evict silently here (unlike the automatic
-    # background sync in scheduler.py) — ask first, since a live user is
-    # present; confirm_evict=True (a resubmission of this same request)
-    # means they already said yes.
-    if is_series:
-        new_count = sum(
-            1 for e in entries_to_process
-            if crud.item_exists(db, payload.channel, e.url) is None
-        )
-        if new_count > 0:
-            plan = crud.plan_retention_eviction(db, payload.channel, new_count)
-            if plan and not payload.confirm_evict:
-                titles = []
-                for unit in plan:
+    # Any add (single item or whole playlist) may need to make room under
+    # the global "maximale Playlistlänge" setting -- this is also the
+    # device's own per-button track limit, so overflow always moves to the
+    # Bibliothek, never deletes (a device sync must never be the reason
+    # something gets permanently lost). Never evict silently here (unlike
+    # the automatic background sync in scheduler.py) -- ask first, since a
+    # live user is present; confirm_evict=True (a resubmission of this same
+    # request) means they already said yes. Whole playlists/subscriptions
+    # are always moved as one unit, never split (see
+    # _oldest_first_eviction_units()).
+    new_count = sum(
+        1 for e in entries_to_process
+        if crud.item_exists(db, payload.channel, e.url) is None
+    )
+    if new_count > 0:
+        plan = crud.plan_retention_eviction(db, payload.channel, new_count)
+        if plan and not payload.confirm_evict:
+            titles = []
+            for unit in plan:
+                if unit["kind"] == "block":
+                    sub = crud.get_subscription(db, unit["subscription_id"])
+                    first_item = crud.get_item(db, unit["item_ids"][0])
+                    titles.append(sub.title if sub and sub.title else first_item.title)
+                else:
+                    titles.append(crud.get_item(db, unit["item_ids"][0]).title)
+            names = ", ".join(i18n.quote(title, lang) for title in titles)
+            return {
+                "ok": True,
+                "needs_confirmation": True,
+                "message": i18n.t("api.eviction_needed", lang, names=names),
+            }
+        if plan and payload.confirm_evict:
+            base_url = _base_url(request)
+            for unit in plan:
+                try:
                     if unit["kind"] == "block":
-                        sub = crud.get_subscription(db, unit["subscription_id"])
-                        first_item = crud.get_item(db, unit["item_ids"][0])
-                        titles.append(sub.title if sub and sub.title else first_item.title)
+                        library.park_block(db, unit["subscription_id"], base_url)
                     else:
-                        titles.append(crud.get_item(db, unit["item_ids"][0]).title)
-                names = ", ".join(i18n.quote(title, lang) for title in titles)
-                return {
-                    "ok": True,
-                    "needs_confirmation": True,
-                    "message": i18n.t("api.eviction_needed", lang, names=names),
-                }
-            if plan and payload.confirm_evict:
-                base_url = _base_url(request)
-                for unit in plan:
-                    try:
-                        if payload.evict_mode == "delete":
-                            if unit["kind"] == "block":
-                                _delete_subscription_and_files(db, unit["subscription_id"], base_url)
-                            else:
-                                _delete_item_and_file(db, unit["item_ids"][0], base_url)
-                        elif unit["kind"] == "block":
-                            library.park_block(db, unit["subscription_id"], base_url)
-                        else:
-                            library.park_item(db, unit["item_ids"][0], base_url)
-                    except library.LibraryError as exc:
-                        logger.warning("eviction action failed: %s", exc)
+                        library.park_item(db, unit["item_ids"][0], base_url)
+                except library.LibraryError as exc:
+                    logger.warning("eviction action failed: %s", exc)
 
+    if is_series:
         sub = crud.create_subscription(db, payload.channel, url, info.kind, title=info.list_title)
         sub_id = sub.id
 
