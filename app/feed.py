@@ -49,9 +49,16 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
     fg.image(url=cover_url, title=i18n.t("feed.channel_title", lang, name=ch_name), link=base_url)
     fg.podcast.itunes_image(cover_url)
 
+    # list_done_items() is already sort_index-ascending (oldest first).
+    # feedgen's add_entry() prepends by default, so adding in that same
+    # ascending order flips it to newest-first in the final XML -- the RSS/
+    # podcast convention (pubDate descending) that device/podcast clients
+    # assume when they treat "first <item>" as "newest episode". Our own
+    # sort_index-ascending order is still what the app UI and the device's
+    # actual playback rely on; only the feed's *document* order needs to
+    # follow the convention.
     items = crud.list_done_items(db, channel_id)
-    # feedgen prepends entries, so add in reverse to keep sort_index order.
-    for item in sorted(items, key=lambda i: i.sort_index, reverse=True):
+    for item in items:
         if not item.filename:
             continue
         fe = fg.add_entry()

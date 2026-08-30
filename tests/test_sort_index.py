@@ -35,11 +35,15 @@ def test_reorder_reflected_in_feed(db):
         crud.update_item(db, item.id, status="done", filename=name,
                          duration_seconds=60, file_size_bytes=1000)
 
+    # After this, "Zwei" has sort_index=1 (plays first in the app), "Eins"
+    # has sort_index=2 (plays last).
     crud.reorder_items(db, 0, [b.id, a.id])
     xml = feed.build_feed_xml(db, 0, "http://host:8080")
 
-    # In the feed, the first <item> title should be "Zwei" after reordering.
+    # The feed follows the RSS/podcast convention (newest episode = first
+    # <item>), which is the *opposite* of app playback order -- so "Eins"
+    # (higher sort_index, plays last) is listed first in the feed.
     pos_zwei = xml.find("<title>Zwei</title>")
     pos_eins = xml.find("<title>Eins</title>")
     assert pos_zwei != -1 and pos_eins != -1
-    assert pos_zwei < pos_eins
+    assert pos_eins < pos_zwei
