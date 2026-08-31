@@ -2,6 +2,11 @@
 const hoerbox = (function () {
     let selectedChannel = null;
     let pollTimers = [];
+    // Bumped whenever a poll loop is started or stopped (see clearTimers()
+    // and pollJobs()) -- lets an in-flight status fetch from a superseded
+    // poll recognize itself as stale once it lands, since clearInterval()
+    // can stop future ticks but can't cancel a fetch that was already sent.
+    let pollGeneration = 0;
 
     function q(sel) { return document.querySelector(sel); }
     function qa(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -202,6 +207,9 @@ const hoerbox = (function () {
     }
 
     function pollJobs(jobIds, statusText, progWrap, retryBtn, initialSeriesTitle) {
+        // Uniquely identifies this poll loop -- see the interval callback
+        // below, and the pollGeneration comment near its declaration.
+        const myGeneration = ++pollGeneration;
         progWrap.hidden = false;
         const total = jobIds.length;
         // Mutable, not just the passed-in parameter: if the server response
@@ -302,6 +310,18 @@ const hoerbox = (function () {
                 try {
                     s = await fetch('/api/job/' + id + '/status').then(r => r.json());
                 } catch (e) { return; }
+
+                if (myGeneration !== pollGeneration) {
+                    // A newer poll has started since this fetch was sent
+                    // (new add, page-load restore, or a cancel) -- our
+                    // interval was already stopped via clearTimers(), but
+                    // that can't un-send a fetch that was already in
+                    // flight. Without this, its response would still land
+                    // and overwrite whatever the current poll is showing
+                    // with a stale batch's status.
+                    clearInterval(timer);
+                    return;
+                }
 
                 if (total === 1) {
                     // Backfill a title the same way the batch branch below
@@ -472,6 +492,7 @@ const hoerbox = (function () {
     function clearTimers() {
         pollTimers.forEach(t => clearInterval(t));
         pollTimers = [];
+        pollGeneration++;
     }
 
     // ---- Persistent status (localStorage) ----------------------------------
