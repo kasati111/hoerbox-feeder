@@ -78,6 +78,7 @@ def get_settings(db: Session) -> Settings:
             audio_channels=config.AUDIO_CHANNELS,
             language=config.LANG,
             skin="colors",
+            feed_order="chronological",
         )
         db.add(settings)
         db.commit()

@@ -1174,16 +1174,41 @@ const hoerbox = (function () {
         if (!box) return;
         const lines = box.dataset.lines || 300;
         let timer = null;
+        let pending = null;  // latest content held back while the user is selecting text
+
+        function isSelectingInBox() {
+            const sel = window.getSelection();
+            return !!sel && !sel.isCollapsed && box.contains(sel.anchorNode);
+        }
+
+        function apply(content) {
+            box.textContent = content;
+            pending = null;
+        }
 
         async function refresh() {
             try {
                 const res = await fetch('/api/logs?lines=' + lines).then(r => r.json());
-                if (res.content) box.textContent = res.content;
+                if (!res.content) return;
+                if (isSelectingInBox()) {
+                    // Replacing textContent mid-selection (e.g. copying a
+                    // log line) collapses it out from under the user --
+                    // hold the update and apply it once they let go.
+                    pending = res.content;
+                    return;
+                }
+                apply(res.content);
             } catch (e) {
                 // Transient network hiccup -- keep showing what we have and
                 // just try again on the next tick.
             }
         }
+
+        // Apply a held-back update the moment the selection clears, rather
+        // than waiting for the next 4s tick.
+        document.addEventListener('selectionchange', () => {
+            if (pending && !isSelectingInBox()) apply(pending);
+        });
 
         function start() {
             if (timer) return;

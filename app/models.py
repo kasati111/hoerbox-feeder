@@ -129,3 +129,7 @@ class Settings(Base):
     audio_channels = Column(Integer, nullable=False, default=1)  # 1 = mono, 2 = stereo
     language = Column(String, nullable=False, default="de")  # "de" | "en"
     skin = Column(String, nullable=False, default="colors")  # "colors" | "numbers"
+    # "chronological" = oldest episode first in the feed document (matches
+    # app/device playback order); "newest_first" = standard RSS convention
+    # (newest episode first) -- see feed.py for why these differ.
+    feed_order = Column(String, nullable=False, default="chronological")

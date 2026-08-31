@@ -278,6 +278,21 @@ STRINGS = {
     "setup.audio_h2": {"de": "Audioausgabe", "en": "Audio output"},
     "setup.audio_mono": {"de": "Mono", "en": "Mono"},
     "setup.audio_stereo": {"de": "Stereo", "en": "Stereo"},
+    "setup.feed_order_h2": {"de": "Abspielreihenfolge", "en": "Playback order"},
+    "setup.feed_order_hint": {
+        "de": "In welcher Reihenfolge landen neue Folgen im Kanal? "
+              "„Chronologisch“ passt für fortlaufende Geschichten (Folge 1 "
+              "zuerst); „Neueste zuerst“ folgt der üblichen Podcast-Konvention "
+              "und eignet sich, wenn der Kanal auch in einer normalen "
+              "Podcast-App genutzt wird.",
+        "en": "In which order do new episodes land in the button/channel? "
+              "„Chronological“ fits an ongoing story (episode 1 "
+              "first); „Newest first“ follows the usual podcast "
+              "convention and suits a channel that's also used in a regular "
+              "podcast app.",
+    },
+    "setup.feed_order_chronological": {"de": "Chronologisch (älteste zuerst)", "en": "Chronological (oldest first)"},
+    "setup.feed_order_newest_first": {"de": "Neueste zuerst", "en": "Newest first"},
     "setup.language_h2": {"de": "Sprache", "en": "Language"},
     "setup.language_de": {"de": "Deutsch", "en": "German"},
     "setup.language_en": {"de": "English", "en": "English"},
@@ -466,6 +481,14 @@ STRINGS = {
     "api.audio_channels_saved": {
         "de": "neue Downloads werden ab jetzt in {label} umgewandelt",
         "en": "new downloads will now be converted to {label}",
+    },
+    "api.choose_feed_order": {
+        "de": "Bitte eine gültige Abspielreihenfolge wählen.",
+        "en": "Please choose a valid playback order.",
+    },
+    "api.feed_order_saved": {
+        "de": "Abspielreihenfolge umgestellt auf {label}",
+        "en": "playback order switched to {label}",
     },
     "api.choose_language": {
         "de": "Bitte eine gültige Sprache wählen.",

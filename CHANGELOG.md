@@ -17,6 +17,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   für hörbert-Varianten/Nachbauten ohne Farbtasten.
 - Globale Tonspur-Einstellung (Mono/Stereo) auf der Setup-Seite. Gilt für
   neue Downloads; bereits geladene Titel behalten ihre bisherige Tonspur.
+- Abspielreihenfolge im Feed umschaltbar (Setting „Abspielreihenfolge"):
+  „Chronologisch" (älteste Folge zuerst, neuer Standard – passend für
+  fortlaufende Geschichten) oder „Neueste zuerst" (bisheriges Verhalten,
+  RSS-Konvention für normale Podcast-Apps).
+
+### Geändert
+- Der Feed listet Folgen standardmäßig chronologisch (älteste zuerst) statt
+  wie bisher nach RSS-Konvention (neueste zuerst) – ein Gerät, das den Feed
+  einfach der Reihe nach abspielt, spielte fortlaufende Geschichten dadurch
+  rückwärts ab. Über die neue Einstellung „Abspielreihenfolge" lässt sich
+  das alte Verhalten bei Bedarf wiederherstellen.
 
 ## [0.1.0] - 2026-08-27
 

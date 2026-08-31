@@ -251,6 +251,7 @@ def setup(request: Request, db: Session = Depends(get_db)):
         "max_items_per_list": settings.max_items_per_list,
         "max_playlist_length": settings.max_playlist_length,
         "audio_channels": settings.audio_channels,
+        "feed_order": settings.feed_order,
         **_base_context(db, settings=settings),
     }
     return templates.TemplateResponse(request, "setup.html", ctx)

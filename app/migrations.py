@@ -29,6 +29,7 @@ _NEW_COLUMNS = [
     # would silently ignore an operator's LANG=en on upgrade.
     ("settings", "language", f"TEXT NOT NULL DEFAULT '{config.LANG}'"),
     ("settings", "skin", "TEXT NOT NULL DEFAULT 'colors'"),
+    ("settings", "feed_order", "TEXT NOT NULL DEFAULT 'chronological'"),
 ]
 
 
