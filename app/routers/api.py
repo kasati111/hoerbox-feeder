@@ -778,6 +778,7 @@ class SettingsRequest(BaseModel):
     audio_channels: Optional[int] = None
     language: Optional[str] = None
     skin: Optional[str] = None
+    feed_order: Optional[str] = None
 
 
 @router.post("/settings")
@@ -835,6 +836,16 @@ def save_settings(payload: SettingsRequest, db: Session = Depends(get_db)):
             i18n.t("api.skin_saved_colors", summary_lang) if payload.skin == "colors"
             else i18n.t("api.skin_saved_numbers", summary_lang)
         )
+
+    if payload.feed_order is not None:
+        if payload.feed_order not in ("chronological", "newest_first"):
+            return {"ok": False, "message": i18n.t("api.choose_feed_order", lang)}
+        fields["feed_order"] = payload.feed_order
+        label = (
+            i18n.t("setup.feed_order_chronological", summary_lang) if payload.feed_order == "chronological"
+            else i18n.t("setup.feed_order_newest_first", summary_lang)
+        )
+        messages.append(i18n.t("api.feed_order_saved", summary_lang, label=label))
 
     if not fields:
         return {"ok": False, "message": i18n.t("api.nothing_to_save", lang)}

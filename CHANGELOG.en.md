@@ -18,6 +18,17 @@ versioning follows [Semantic Versioning](https://semver.org/).
   colored keys.
 - Global audio-channel setting (mono/stereo) on the Setup page. Applies to
   new downloads; already-loaded titles keep their existing audio channels.
+- Feed playback order is switchable (the "Playback order" setting):
+  "Chronological" (oldest episode first, new default – fits an ongoing
+  story) or "Newest first" (previous behavior, RSS convention for regular
+  podcast apps).
+
+### Changed
+- The feed now lists episodes chronologically (oldest first) by default,
+  instead of the previous RSS convention (newest first) – a device that
+  just plays through the feed in order ended up playing an ongoing story
+  backwards. The new "Playback order" setting can restore the old
+  behavior if needed.
 
 ## [0.1.0] - 2026-08-27
 

@@ -34,7 +34,8 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
     base_url e.g. "http://192.168.1.50:8080" (no trailing slash).
     """
     base_url = base_url.rstrip("/")
-    lang, skin = crud.lang_skin(db)
+    settings = crud.get_settings(db)
+    lang, skin = settings.language, settings.skin
     channel = crud.get_channel(db, channel_id)
     ch_name = i18n.channel_label(channel, lang, skin) if channel else str(channel_id)
 
@@ -50,14 +51,22 @@ def build_feed_xml(db: Session, channel_id: int, base_url: str) -> str:
     fg.podcast.itunes_image(cover_url)
 
     # list_done_items() is already sort_index-ascending (oldest first).
-    # feedgen's add_entry() prepends by default, so adding in that same
-    # ascending order flips it to newest-first in the final XML -- the RSS/
-    # podcast convention (pubDate descending) that device/podcast clients
-    # assume when they treat "first <item>" as "newest episode". Our own
-    # sort_index-ascending order is still what the app UI and the device's
-    # actual playback rely on; only the feed's *document* order needs to
-    # follow the convention.
+    # feedgen's add_entry() prepends by default, so adding in that order
+    # flips it to newest-first in the final XML -- the RSS/podcast
+    # convention (pubDate descending) that generic podcast apps assume when
+    # they treat "first <item>" as "newest episode".
+    #
+    # A device that just plays through the feed in document order (rather
+    # than letting a person pick an episode) ends up playing newest-first
+    # too, which is backwards for a story told in sequential episodes --
+    # hence "chronological" (oldest first in the document, matching sort_index
+    # order) as the default. "newest_first" keeps the RSS-convention behavior
+    # for setups that rely on it (e.g. a generic podcast app showing this
+    # feed's latest episode at the top). See Settings.feed_order / the Setup
+    # page.
     items = crud.list_done_items(db, channel_id)
+    if settings.feed_order != "newest_first":
+        items = list(reversed(items))
     for item in items:
         if not item.filename:
             continue

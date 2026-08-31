@@ -84,6 +84,17 @@
     </div>
 
     <div class="setup-card settings-card">
+        <h2>{{ t('setup.feed_order_h2') }}</h2>
+        <p class="hint">{{ t('setup.feed_order_hint') }}</p>
+        <div class="settings-row">
+            <label><input type="radio" name="feed-order" value="chronological" {% if feed_order == 'chronological' %}checked{% endif %}> {{ t('setup.feed_order_chronological') }}</label>
+            <label><input type="radio" name="feed-order" value="newest_first" {% if feed_order == 'newest_first' %}checked{% endif %}> {{ t('setup.feed_order_newest_first') }}</label>
+            <button type="button" id="feed-order-save" class="cookie-upload-btn">{{ t('common.save') }}</button>
+        </div>
+        <span id="feed-order-msg"></span>
+    </div>
+
+    <div class="setup-card settings-card">
         <h2>{{ t('setup.language_h2') }}</h2>
         <div class="settings-row">
             <label><input type="radio" name="language" value="de" {% if lang == 'de' %}checked{% endif %}> {{ t('setup.language_de') }}</label>
@@ -231,6 +242,13 @@ bindSettingsSave({
     msgId: 'audio-channels-msg',
     field: 'audio_channels',
     getValue: () => parseInt(document.querySelector('input[name="audio-channels"]:checked').value, 10),
+});
+
+bindSettingsSave({
+    saveBtnId: 'feed-order-save',
+    msgId: 'feed-order-msg',
+    field: 'feed_order',
+    getValue: () => document.querySelector('input[name="feed-order"]:checked').value,
 });
 
 // Language and button-display changes affect every string/color on the
