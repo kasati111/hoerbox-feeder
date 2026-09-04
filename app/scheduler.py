@@ -42,8 +42,9 @@ def sync_subscription(sub_id: int) -> None:
     new_count = 0
     with session_scope() as db:
         limit = crud.get_settings(db).max_items_per_list
-        entries = info.entries[:limit]
-        for entry in entries:
+        for entry in info.entries:
+            if new_count >= limit:
+                break
             # Idempotency scoped to the subscription (not the channel) — stays
             # correct even if an episode was individually reassigned to a
             # different channel or parked in the Bibliothek.

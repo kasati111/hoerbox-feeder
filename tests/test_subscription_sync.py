@@ -97,6 +97,35 @@ def test_deleted_item_is_not_resurrected_by_next_sync(db, patched):
     assert items[0].source_url == "https://feed/x/2"
 
 
+def test_catch_up_fetches_beyond_initial_limit(db, patched):
+    """Regression test: once the first max_items_per_list entries are known,
+    later syncs must keep advancing through the rest of a longer source list
+    instead of re-checking the same leading entries and finding nothing new
+    forever (a real long playlist stalled at exactly the limit for days)."""
+    crud.update_settings(db, max_items_per_list=2)
+
+    sub = crud.create_subscription(db, 0, "https://feed/x", "podcast")
+    crud.set_subscription_enabled_by_id(db, sub.id, True)
+    _set_source(patched, [
+        SourceEntry(f"https://feed/x/{i}", f"Folge {i}") for i in range(1, 6)
+    ])
+
+    scheduler.sync_subscription(sub.id)
+    assert {i.source_url for i in crud.list_items(db, 0)} == {
+        "https://feed/x/1", "https://feed/x/2",
+    }
+
+    scheduler.sync_subscription(sub.id)
+    assert {i.source_url for i in crud.list_items(db, 0)} == {
+        "https://feed/x/1", "https://feed/x/2", "https://feed/x/3", "https://feed/x/4",
+    }
+
+    scheduler.sync_subscription(sub.id)
+    assert {i.source_url for i in crud.list_items(db, 0)} == {
+        f"https://feed/x/{i}" for i in range(1, 6)
+    }
+
+
 def test_retention_applied_on_sync(db, patched):
     crud.update_settings(db, max_playlist_length=2)
 
