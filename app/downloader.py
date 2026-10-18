@@ -5,8 +5,8 @@ shell command.
 """
 import logging
 import re
-import urllib.parse
 import threading
+import urllib.parse
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
