@@ -5,6 +5,7 @@ shell command.
 """
 import logging
 import re
+import urllib.parse
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -127,6 +128,11 @@ def _base_ydl_opts() -> dict:
         # kill. This bounds that: a dead socket now raises after 30s instead
         # of hanging indefinitely.
         "socket_timeout": 30,
+        # Die Python-API hat (anders als die CLI mit 10) standardmäßig 0 Wiederholungen:
+        # ein einzelnes HTTP 503 vom YouTube-CDN ließ den Auftrag sofort scheitern.
+        "retries": 10,
+        "fragment_retries": 10,
+        "extractor_retries": 3,
     }
     # If a cookies.txt is present (exported from a logged-in browser), use it.
     # This bypasses YouTube's bot-detection on server IPs.
@@ -443,7 +449,9 @@ def _ytmusic_fallback_url(url: str) -> Optional[str]:
     """
     prefix = "ytsearch1:"
     if url.startswith(prefix):
-        return "ytsearchmusic1:" + url[len(prefix):]
+        # "ytsearchmusic1:" kennt yt-dlp nicht ("Unsupported url scheme"); die
+        # YouTube-Music-Suche läuft über die Such-URL (erster Treffer, s. download_audio).
+        return "https://music.youtube.com/search?q=" + urllib.parse.quote_plus(url[len(prefix):])
     return None
 
 
@@ -504,10 +512,12 @@ def download_audio(
         if attempt_url != url:
             logger.info("YouTube: kein Treffer – versuche YouTube Music: %s", attempt_url)
         try:
-            info = _try_download(attempt_url, opts, dest_dir)
+            attempt_opts = opts if attempt_url == url else {**opts, "playlist_items": "1"}
+            info = _try_download(attempt_url, attempt_opts, dest_dir)
         except Exception as exc:  # noqa: BLE001 — real yt-dlp error, preserved below
             logger.warning("download attempt failed for %s: %s", attempt_url, exc)
-            last_error = exc
+            if last_error is None:
+                last_error = exc  # Fehler des ersten Versuchs behalten, nicht den des Fallbacks
             info = None
             continue
         if info is not None:
